@@ -5,6 +5,7 @@ import { confirmDialog, useUI } from '../store';
 import { Icon } from './Icon';
 import { Modal, toast, useMenu } from './Overlays';
 import { relTime } from '../lib/text';
+import { exportAll } from '../import/exporter';
 
 /** Name + menu in the sidebar footer. */
 export function AccountButton() {
@@ -28,6 +29,10 @@ export function AccountButton() {
       <button className="account" onClick={(e) => {
         const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
         openMenu({ clientX: r.left, clientY: r.top - 8 }, [
+          { label: 'Import .md files', icon: 'download', onClick: () => set({ importOpen: true }) },
+          { label: 'Export all notes (.zip)', icon: 'upload', onClick: () => void exportAll() },
+          { label: 'Trash', icon: 'trash', onClick: () => set({ view: 'trash', pane: 'list', focus: false }) },
+          { divider: true },
           { label: 'Change password', icon: 'edit', onClick: () => set({ passwordOpen: true }) },
           ...(user.is_admin ? [{ label: 'Manage users', icon: 'users', onClick: () => set({ usersOpen: true }) }] : []),
           { divider: true },
@@ -39,6 +44,7 @@ export function AccountButton() {
           <span className="truncate">{user.name || user.email}</span>
           {user.is_admin && <span className="role">Admin</span>}
         </span>
+        <Icon name="updown" size={14} className="account-caret" />
       </button>
       {menu}
     </>

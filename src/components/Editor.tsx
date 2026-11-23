@@ -6,11 +6,13 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
+import Image from '@tiptap/extension-image';
+import { looksLikeImageUrl } from './ImageDialog';
 import { Markdown } from 'tiptap-markdown';
 import { db } from '../data/db';
 import { deletePage, normalizeTag, restorePage, updatePage } from '../data/actions';
 import type { Page } from '../../shared/schema';
-import { useUI } from '../store';
+import { askImage, useUI } from '../store';
 import { Icon } from './Icon';
 import { useMenu, toast } from './Overlays';
 import { SlashCommand, SlashMenu } from './SlashMenu';
@@ -18,10 +20,12 @@ import { OfflineBanner, SyncBadge } from './SyncBadge';
 import { formatDate, relTime, wordCount } from '../lib/text';
 import { exportPage, exportPagePdf, exportPageText } from '../import/exporter';
 import { BrandMark } from './Brand';
+import { Toolbar } from './Toolbar';
 
 export function EditorPane() {
   const pageId = useUI((s) => s.pageId);
   const set = useUI((s) => s.set);
+  const focus = useUI((s) => s.focus);
   const page = useLiveQuery(() => (pageId ? db.pages.get(pageId) : undefined), [pageId]);
 
   if (!pageId || !page || page.purged) {
@@ -32,6 +36,7 @@ export function EditorPane() {
           <BrandMark size={44} className="empty-brand" />
           <p>Select a page, or press <kbd>⌘K</kbd> to search.</p>
           <button className="mobile-only btn" onClick={() => set({ pane: 'list' })}>Back to pages</button>
+          {focus && <button className="btn desktop-only" onClick={() => set({ focus: false })}><Icon name="sidebar" />Show sidebar</button>}
         </div>
       </main>
     );
@@ -77,11 +82,32 @@ function PageEditor({ page }: { page: Page }) {
       TaskList,
       TaskItem.configure({ nested: true }),
       Link.configure({ openOnClick: false, autolink: true }),
+      Image.configure({ inline: false, allowBase64: false, HTMLAttributes: { referrerpolicy: 'no-referrer', loading: 'lazy' } }),
       Placeholder.configure({ placeholder: "Type '/' for commands…" }),
       Markdown.configure({ html: false, tightLists: true, linkify: true, transformPastedText: true, breaks: false }),
       SlashCommand,
     ],
     content: page.content,
+    editorProps: {
+      // Pasting a direct image link embeds the image.
+      handlePaste: (view, event) => {
+        const data = event.clipboardData;
+        const text = data?.getData('text/plain')?.trim() ?? '';
+        if (!text || data?.getData('text/html') || !looksLikeImageUrl(text)) return false;
+        const image = view.state.schema.nodes.image;
+        if (!image) return false;
+        view.dispatch(view.state.tr.replaceSelectionWith(image.create({ src: text })).scrollIntoView());
+        return true;
+      },
+      // Double-click an image to change its link or description.
+      handleDoubleClickOn: (view, pos, node) => {
+        if (node.type.name !== 'image' || !view.editable) return false;
+        void askImage({ src: node.attrs.src, alt: node.attrs.alt ?? '' }).then((v) => {
+          if (v) view.dispatch(view.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, src: v.src, alt: v.alt || null }));
+        });
+        return true;
+      },
+    },
     onUpdate: ({ editor }) => {
       const md = (editor.storage as { markdown: { getMarkdown: () => string } }).markdown.getMarkdown();
       setWords(wordCount(md));
@@ -122,6 +148,7 @@ function PageEditor({ page }: { page: Page }) {
   const moreMenu = [
     { label: page.favorite ? 'Remove from favorites' : 'Add to favorites', icon: 'star', onClick: () => updatePage(page.id, { favorite: page.favorite ? 0 : 1 }) },
     { label: 'Move to…', icon: 'move', onClick: () => ui.set({ moveOpen: page.id }) },
+    { label: ui.toolbar ? 'Hide formatting toolbar' : 'Show formatting toolbar', icon: 'bold', onClick: () => ui.set({ toolbar: !ui.toolbar }) },
     { divider: true },
     { label: 'Export as PDF', icon: 'pdf', onClick: () => {
       saveContent.flush();
@@ -141,6 +168,9 @@ function PageEditor({ page }: { page: Page }) {
         <button className="mobile-back inline" onClick={() => { saveContent.flush(); ui.set({ pane: 'list' }); }}>
           <Icon name="back" />{notebook?.name || 'Back'}
         </button>
+        <button className={`icon-btn focus-btn desktop-only ${ui.focus ? 'on' : ''}`}
+          title={ui.focus ? 'Show sidebar (Ctrl/⌘ + \\)' : 'Focus mode: hide sidebar (Ctrl/⌘ + \\)'}
+          aria-pressed={ui.focus} onClick={() => ui.set({ focus: !ui.focus })}><Icon name="sidebar" /></button>
         <span className="crumb desktop-only">
           {group && !group.deleted_at && <>{group.name} <span className="sep">›</span> </>}{notebook?.name}
           {parent && <> <span className="sep">›</span> {parent.title || 'Untitled'}</>}
@@ -155,6 +185,8 @@ function PageEditor({ page }: { page: Page }) {
           {!readOnly && <button className="icon-btn" title="More" onClick={(e) => openMenu(e, moreMenu)}><Icon name="more" /></button>}
         </div>
       </div>
+
+      {!readOnly && ui.toolbar && <Toolbar editor={editor} />}
 
       {readOnly && (
         <div className="trash-banner">

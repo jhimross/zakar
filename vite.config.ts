@@ -28,6 +28,16 @@ export default defineConfig({
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/cdn-cgi\//],
         cleanupOutdatedCaches: true,
+        // Keep images embedded from other sites available offline once they've been seen.
+        runtimeCaching: [{
+          urlPattern: ({ request, sameOrigin }) => request.destination === 'image' && !sameOrigin,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'note-images',
+            expiration: { maxEntries: 150, maxAgeSeconds: 60 * 60 * 24 * 60, purgeOnQuotaError: true },
+            cacheableResponse: { statuses: [0, 200] },
+          },
+        }],
       },
     }),
   ],

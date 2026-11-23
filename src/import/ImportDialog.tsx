@@ -126,7 +126,7 @@ export function ImportDialog() {
             )}
             {plan.duplicateCount > 0 && (
               <label className="check-label"><input type="checkbox" checked={skipDup} onChange={(e) => setSkipDup(e.target.checked)} />
-                Skip pages that already exist (same title in the same section)</label>
+                Skip pages that already exist (same title in the same notebook)</label>
             )}
             <label className="field inline">Notebook for loose files
               <input className="input" value={loose} onChange={(e) => setLoose(e.target.value)} />

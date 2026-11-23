@@ -4,6 +4,7 @@ import Suggestion from '@tiptap/suggestion';
 import { create } from 'zustand';
 import { createPortal } from 'react-dom';
 import { Icon } from './Icon';
+import { askImage } from '../store';
 
 interface Cmd { title: string; icon: string; hint?: string; keywords?: string; run: (e: Editor, r: Range) => void }
 
@@ -17,6 +18,10 @@ export const COMMANDS: Cmd[] = [
   { title: 'Numbered list', icon: 'olist', hint: '1.', keywords: 'ordered ol', run: (e, r) => e.chain().focus().deleteRange(r).toggleOrderedList().run() },
   { title: 'Quote', icon: 'quote', hint: '>', keywords: 'blockquote', run: (e, r) => e.chain().focus().deleteRange(r).toggleBlockquote().run() },
   { title: 'Code block', icon: 'code', hint: '```', keywords: 'pre', run: (e, r) => e.chain().focus().deleteRange(r).toggleCodeBlock().run() },
+  { title: 'Image from link', icon: 'image', keywords: 'picture photo url embed', run: (e, r) => {
+    e.chain().focus().deleteRange(r).run();
+    void askImage().then((v) => { if (v) e.chain().focus().setImage(v).run(); });
+  } },
   { title: 'Divider', icon: 'divider', hint: '---', keywords: 'hr rule line', run: (e, r) => e.chain().focus().deleteRange(r).setHorizontalRule().run() },
 ];
 

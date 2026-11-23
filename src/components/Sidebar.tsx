@@ -5,7 +5,6 @@ import { BrandMark, Wordmark } from './Brand';
 import { SyncBadge } from './SyncBadge';
 import { AccountButton } from './AccountDialogs';
 import { InstallButton } from './Install';
-import { exportAll } from '../import/exporter';
 
 export function Sidebar() {
   const ui = useUI();
@@ -33,11 +32,6 @@ export function Sidebar() {
 
       <NotebookTree />
 
-      <nav className="nav mt">
-        <button onClick={() => ui.set({ importOpen: true })}><Icon name="download" />Import .md</button>
-        <button onClick={() => exportAll()}><Icon name="upload" />Export .zip</button>
-        <button className={ui.view === 'trash' ? 'on' : ''} onClick={() => go('trash')}><Icon name="trash" />Trash</button>
-      </nav>
       <div className="foot"><InstallButton variant="sidebar" /><SyncBadge /><AccountButton /></div>
     </aside>
   );

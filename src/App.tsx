@@ -17,6 +17,7 @@ import { initAuth, useAuth } from './data/auth';
 import { LoadingScreen, LoginScreen, SetupScreen } from './components/AuthScreens';
 import { PasswordDialog, UsersDialog } from './components/AccountDialogs';
 import { InstallGuide } from './components/Install';
+import { ImageDialog } from './components/ImageDialog';
 
 export default function Root() {
   const status = useAuth((s) => s.status);
@@ -26,7 +27,7 @@ export default function Root() {
   useEffect(() => { if (status === 'ready' && user) useUI.getState().resetForUser(user.id); }, [status, user]);
   useTheme(theme);
   const screen = status === 'loading' ? <LoadingScreen /> : status === 'setup' ? <SetupScreen /> : status === 'login' ? <LoginScreen /> : <App />;
-  return <>{screen}<InstallGuide /></>;
+  return <>{screen}<InstallGuide /><ImageDialog /></>;
 }
 
 function useTheme(theme: string) {
@@ -60,6 +61,7 @@ function App() {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); ui.set({ paletteOpen: !useUI.getState().paletteOpen }); }
+      if (mod && e.key === '\\') { e.preventDefault(); ui.set({ focus: !useUI.getState().focus }); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -80,7 +82,7 @@ function App() {
   const firstRun = notebookCount === 0;
 
   return (
-    <div className={`app pane-${ui.pane} view-${ui.view}`}>
+    <div className={`app pane-${ui.pane} view-${ui.view} ${ui.focus ? 'focus' : ''}`}>
       <Sidebar />
       {firstRun ? (
         <Welcome syncing={syncState === 'syncing'} />
