@@ -36,6 +36,9 @@ export function AccountButton() {
           { label: 'Change password', icon: 'edit', onClick: () => set({ passwordOpen: true }) },
           ...(user.is_admin ? [{ label: 'Manage users', icon: 'users', onClick: () => set({ usersOpen: true }) }] : []),
           { divider: true },
+          { label: "What's new", icon: 'sparkle', onClick: () => set({ releaseNotes: 'all' }) },
+          { label: 'About Zakar', icon: 'info', onClick: () => set({ aboutOpen: true }) },
+          { divider: true },
           { label: 'Sign out', icon: 'logout', onClick: signOut },
         ]);
       }}>
