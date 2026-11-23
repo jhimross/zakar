@@ -1,0 +1,47 @@
+{
+  "name": "mynotes",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "node scripts/decode-icons.mjs && vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "preview": "npm run build && wrangler pages dev dist",
+    "db:migrate:local": "wrangler d1 migrations apply mynotes --local",
+    "db:migrate:remote": "wrangler d1 migrations apply mynotes --remote",
+    "pages:dev": "wrangler pages dev dist --port 8788",
+    "test": "node tests/run.mjs"
+  },
+  "dependencies": {
+    "@tiptap/core": "^2.11.5",
+    "@tiptap/extension-link": "^2.11.5",
+    "@tiptap/extension-placeholder": "^2.11.5",
+    "@tiptap/extension-task-item": "^2.11.5",
+    "@tiptap/extension-task-list": "^2.11.5",
+    "@tiptap/pm": "^2.11.5",
+    "@tiptap/react": "^2.11.5",
+    "@tiptap/starter-kit": "^2.11.5",
+    "@tiptap/suggestion": "^2.11.5",
+    "dexie": "^4.0.10",
+    "dexie-react-hooks": "^1.1.7",
+    "fractional-indexing": "^3.2.0",
+    "jose": "^5.9.6",
+    "jszip": "^3.10.1",
+    "minisearch": "^7.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tiptap-markdown": "^0.8.10",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241230.0",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7",
+    "vite-plugin-pwa": "^0.21.1",
+    "wrangler": "^4.0.0"
+  }
+}

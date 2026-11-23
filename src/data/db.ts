@@ -1,0 +1,51 @@
+// Local database (IndexedDB via Dexie). This is the app's source of truth; the server is a sync target.
+import Dexie, { type Table } from 'dexie';
+import type { Notebook, Section, Page, TableName } from '../../shared/schema';
+
+export interface OutboxEntry {
+  key: string;          // `${table}:${id}`
+  table: TableName;
+  id: string;
+  baseSeq: number;      // server seq the local edits are based on
+  rev: string;          // changes on every local edit (detects edits made while a sync is in flight)
+  ts: number;
+}
+
+export interface MetaEntry { k: string; v: unknown }
+
+class NotesDB extends Dexie {
+  notebooks!: Table<Notebook, string>;
+  sections!: Table<Section, string>;
+  pages!: Table<Page, string>;
+  outbox!: Table<OutboxEntry, string>;
+  meta!: Table<MetaEntry, string>;
+
+  constructor() {
+    super('mynotes');
+    this.version(1).stores({
+      notebooks: 'id, sort_key',
+      sections: 'id, notebook_id, sort_key',
+      pages: 'id, section_id, parent_id, updated_at',
+      outbox: 'key, ts',
+      meta: 'k',
+    });
+  }
+}
+
+export const db = new NotesDB();
+
+export async function getMeta<T>(k: string, fallback: T): Promise<T> {
+  const m = await db.meta.get(k);
+  return m ? (m.v as T) : fallback;
+}
+
+export function setMeta(k: string, v: unknown) {
+  return db.meta.put({ k, v });
+}
+
+/** Ask the browser not to evict our data under storage pressure. */
+export async function requestPersistentStorage() {
+  try {
+    if (navigator.storage?.persist && !(await navigator.storage.persisted())) await navigator.storage.persist();
+  } catch { /* ignore */ }
+}

@@ -1,0 +1,17 @@
+# Cloudflare Pages config. Pages reads this file when deploying from GitHub.
+name = "mynotes"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-06-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mynotes"
+# Replace with the id printed by: npx wrangler d1 create mynotes
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[vars]
+# Fill these in after setting up Cloudflare Access (see README).
+ACCESS_TEAM_DOMAIN = ""
+ACCESS_AUD = ""
+ALLOWED_EMAILS = ""
