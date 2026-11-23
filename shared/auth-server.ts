@@ -18,7 +18,7 @@ const DAY = 86_400_000;
 const PBKDF2_ITERATIONS = 100_000; // Cloudflare Workers' maximum
 const MAX_ATTEMPTS = 10;
 const ATTEMPT_WINDOW = 15 * 60_000;
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 // ---------------- Schema (created automatically, no console steps needed) ----------------
 const SCHEMA = [
@@ -31,9 +31,13 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, user_agent TEXT)`,
   `CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)`,
   `CREATE TABLE IF NOT EXISTS login_attempts (k TEXT PRIMARY KEY, count INTEGER NOT NULL, window_start INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS notebook_groups (id TEXT PRIMARY KEY, name TEXT NOT NULL DEFAULT '', color TEXT, sort_key TEXT NOT NULL DEFAULT 'a0', created_at INTEGER, updated_at INTEGER, deleted_at INTEGER, seq INTEGER NOT NULL, user_id TEXT)`,
 ];
-const ADD_COLUMNS = ['notebooks', 'sections', 'pages'].map((t) => `ALTER TABLE ${t} ADD COLUMN user_id TEXT`);
-const INDEXES = ['notebooks', 'sections', 'pages'].map((t) => `CREATE INDEX IF NOT EXISTS idx_${t}_user_seq ON ${t}(user_id, seq)`);
+const ADD_COLUMNS = [
+  ...['notebooks', 'sections', 'pages'].map((t) => `ALTER TABLE ${t} ADD COLUMN user_id TEXT`),
+  `ALTER TABLE notebooks ADD COLUMN group_id TEXT`,
+];
+const INDEXES = ['notebook_groups', 'notebooks', 'sections', 'pages'].map((t) => `CREATE INDEX IF NOT EXISTS idx_${t}_user_seq ON ${t}(user_id, seq)`);
 
 let schemaReady: Promise<void> | null = null;
 
@@ -193,7 +197,7 @@ export async function handleAuth(req: Request, db: DB, action: string): Promise<
     await db.prepare(`INSERT INTO users (id, email, name, password_hash, is_admin, disabled, created_at) VALUES (?, ?, ?, ?, 1, 0, ?)`)
       .bind(id, email, String(b.name ?? '').trim().slice(0, 100), await hashPassword(String(b.password)), Date.now()).run();
     // Notes synced before accounts existed belong to the first admin.
-    await db.batch(['notebooks', 'sections', 'pages'].map((t) => db.prepare(`UPDATE ${t} SET user_id = ? WHERE user_id IS NULL`).bind(id)));
+    await db.batch(['notebook_groups', 'notebooks', 'sections', 'pages'].map((t) => db.prepare(`UPDATE ${t} SET user_id = ? WHERE user_id IS NULL`).bind(id)));
     const cookie = await createSession(db, req, id);
     const user = await db.prepare(`SELECT * FROM users WHERE id = ?`).bind(id).first<User>();
     return json(200, { user: publicUser(user!) }, { 'set-cookie': cookie });
@@ -312,6 +316,7 @@ export async function handleAdmin(req: Request, db: DB, me: User, path: string[]
       db.prepare(`DELETE FROM pages WHERE user_id = ?`).bind(id),
       db.prepare(`DELETE FROM sections WHERE user_id = ?`).bind(id),
       db.prepare(`DELETE FROM notebooks WHERE user_id = ?`).bind(id),
+      db.prepare(`DELETE FROM notebook_groups WHERE user_id = ?`).bind(id),
       db.prepare(`DELETE FROM users WHERE id = ?`).bind(id),
     ]);
     return json(200, { ok: true });

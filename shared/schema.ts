@@ -1,7 +1,8 @@
 // Shared between the browser app and the Cloudflare sync function.
 
 export const TABLES = {
-  notebooks: ['id', 'name', 'color', 'icon', 'sort_key', 'created_at', 'updated_at', 'deleted_at'],
+  notebook_groups: ['id', 'name', 'color', 'sort_key', 'created_at', 'updated_at', 'deleted_at'],
+  notebooks: ['id', 'group_id', 'name', 'color', 'icon', 'sort_key', 'created_at', 'updated_at', 'deleted_at'],
   sections: ['id', 'notebook_id', 'parent_id', 'name', 'color', 'sort_key', 'created_at', 'updated_at', 'deleted_at'],
   pages: [
     'id', 'section_id', 'parent_id', 'title', 'content', 'tags', 'favorite', 'purged',
@@ -27,7 +28,14 @@ export interface Base {
   _seq?: number;
 }
 
+/** A folder of notebooks in the sidebar. */
+export interface NotebookGroup extends Base {
+  name: string;
+  color: string | null;
+}
+
 export interface Notebook extends Base {
+  group_id?: string | null;
   name: string;
   color: string | null;
   icon: string | null;
@@ -50,7 +58,7 @@ export interface Page extends Base {
   purged: number;
 }
 
-export type AnyRow = Notebook | Section | Page;
+export type AnyRow = NotebookGroup | Notebook | Section | Page;
 
 export interface PushChange {
   table: TableName;

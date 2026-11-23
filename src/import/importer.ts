@@ -1,7 +1,7 @@
 // Browser side of import: read files (picker, folder, .zip, drag & drop) and write the plan to the local DB.
 import JSZip from 'jszip';
 import { db } from '../data/db';
-import { bySort, COLORS, keyBetween, keysAfter, saveRows, uid } from '../data/actions';
+import { bySort, COLORS, keyBetween, keysAfter, saveRows, sidebarSiblings, uid } from '../data/actions';
 import type { Notebook, Page, Section } from '../../shared/schema';
 import type { ExistingNotebook, ImportPlan, PlanPage, SourceFile } from './plan';
 
@@ -72,14 +72,14 @@ export async function commitPlan(plan: ImportPlan, opts: { skipDuplicates: boole
   const t = Date.now();
   const newNbs: Notebook[] = []; const newSecs: Section[] = []; const newPages: Page[] = [];
   const nbsNow = (await db.notebooks.toArray()).filter((n) => !n.deleted_at).sort(bySort);
-  let lastNbKey = nbsNow.at(-1)?.sort_key ?? null;
+  let lastNbKey = (await sidebarSiblings(null)).at(-1)?.sort_key ?? null;
   let colorIdx = nbsNow.length;
 
   for (const nb of plan.notebooks) {
     let nbId = nb.existingId;
     if (!nbId) {
       lastNbKey = keyBetween(lastNbKey, null);
-      const row: Notebook = { id: uid(), name: nb.name, color: COLORS[colorIdx++ % COLORS.length], icon: null, sort_key: lastNbKey, created_at: t, updated_at: t, deleted_at: null, _seq: 0 };
+      const row: Notebook = { id: uid(), group_id: null, name: nb.name, color: COLORS[colorIdx++ % COLORS.length], icon: null, sort_key: lastNbKey, created_at: t, updated_at: t, deleted_at: null, _seq: 0 };
       newNbs.push(row); nbId = row.id;
     }
     const secsNow = (await db.sections.where('notebook_id').equals(nbId).toArray()).filter((s) => !s.deleted_at).sort(bySort);

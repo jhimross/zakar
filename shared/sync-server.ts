@@ -132,7 +132,7 @@ export async function handleSync(db: DB, body: SyncRequest, userId: string): Pro
   }
 
   // 4. Pull everything that changed since the client's cursor.
-  const out = { notebooks: [], sections: [], pages: [] } as SyncResponse['changes'];
+  const out = Object.fromEntries(TABLE_NAMES.map((t) => [t, []])) as unknown as SyncResponse['changes'];
   let cursor = since;
   let limitCursor = Infinity;
   let more = false;
