@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Icon } from './Icon';
 import { useUI } from '../store';
 import { COLORS } from '../data/actions';
+import { useBackToClose } from '../lib/backnav';
 
 export interface MenuItem {
   label?: string;
@@ -28,6 +29,7 @@ export function useMenu(): [ReactNode, (e: { clientX: number; clientY: number; p
 
 function Menu({ x, y, items, onClose }: { x: number; y: number; items: MenuItem[]; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  useBackToClose(onClose);
   const [pos, setPos] = useState({ x, y });
   useLayoutEffect(() => {
     const el = ref.current;
@@ -66,6 +68,7 @@ function Menu({ x, y, items, onClose }: { x: number; y: number; items: MenuItem[
 }
 
 export function Modal({ children, onClose, className = '' }: { children: ReactNode; onClose: () => void; className?: string }) {
+  useBackToClose(onClose);
   useEffect(() => {
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', esc);

@@ -201,6 +201,8 @@ An **Install** button appears on the sign-in page and at the bottom of the sideb
 
 The layout adapts to small screens: **notebooks → pages → note**, with back buttons, a big **+** button for new pages, a swipeable formatting toolbar, and an offline banner when you lose signal.
 
+The phone's **Back button** (Android) and **swipe from the left edge** (iPhone/iPad) work inside the app: they close an open menu or dialog first, then go note → pages → notebooks. Only on the first screen does Back leave the app. In a desktop browser, Back closes open dialogs.
+
 ---
 
 ## Accounts and users
@@ -423,7 +425,7 @@ src/
   data/               IndexedDB, write actions, sync client, sign-in state
   components/         UI (sidebar, page list, editor, toolbar, dialogs…)
   import/             .md import and export
-  lib/                text helpers, install prompt, auto-update
+  lib/                text helpers, install prompt, auto-update, Back button handling
   changelog.ts        Release notes (newest first); the top entry is the app version
   about.ts            Text for the About dialog
 docs/                 Screenshots and brand files used by this README
