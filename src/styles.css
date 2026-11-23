@@ -319,3 +319,32 @@ input[type="checkbox"]:checked::after { content: ""; width: 4px; height: 8px; bo
 .nowrap { flex-wrap: nowrap; }
 .mono { font-family: var(--mono); }
 @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+
+/* ---------- Notebook groups ---------- */
+.group-row { display: flex; align-items: center; gap: 6px; padding: 6px 8px 6px 6px; border-radius: 6px; color: var(--ink2); cursor: pointer; font-weight: 500; position: relative; }
+.group-row:hover { background: var(--hover); }
+.group-row .caret { margin-left: 0; }
+.group-row .folder-icon { color: var(--ink3); }
+.group-row .count { margin-left: auto; font-size: 11px; color: var(--ink3); font-weight: 400; }
+.group-row:hover .count { display: none; }
+.group-row .hover-only { margin-left: auto; }
+.group-row:not(:hover) .hover-only { display: none; }
+.group-row:hover .hover-only { opacity: 1; }
+.group-children { margin: 1px 0 4px 14px; padding-left: 6px; border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 1px; }
+.group-empty { font-size: 12px; color: var(--ink3); padding: 5px 10px; }
+.nb { position: relative; }
+.nb.nested { padding-left: 8px; }
+.nb.dragging, .group.dragging { opacity: .4; }
+.nb.drop-before::before, .nb.drop-after::after, .group-row.drop-before::before, .group-row.drop-after::after {
+  content: ""; position: absolute; left: 6px; right: 6px; height: 2px; background: var(--accent); border-radius: 2px;
+}
+.nb.drop-before::before, .group-row.drop-before::before { top: -1px; }
+.nb.drop-after::after, .group-row.drop-after::after { bottom: -1px; }
+.group-row.drop-inside { background: color-mix(in srgb, var(--accent) 12%, transparent); box-shadow: inset 0 0 0 1px var(--accent); }
+.drop-end { margin-top: 6px; border: 1.5px dashed var(--line); border-radius: 8px; padding: 8px; font-size: 12px; color: var(--ink3); text-align: center; }
+.drop-end.on { border-color: var(--accent); color: var(--accent); }
+@media (max-width: 860px) {
+  .group-row { padding: 10px 8px; }
+  .group-row .count { display: none; }
+  .group-row .hover-only { display: inline-grid !important; }
+}

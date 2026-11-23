@@ -4,6 +4,7 @@ A minimalist, offline-first notes app organized like OneNote: **notebooks › se
 
 ## Features
 
+- **Notebook groups**: collapsible folders in the sidebar. Drag notebooks into, out of and between groups, and drag groups to reorder them (on phones, use the ⋯ menu → Move to group).
 - **Notebooks, sections (colored tabs), pages and subpages** (2 levels). Drag pages to reorder or nest them, or drop them on a section tab to move them.
 - **Rich Markdown editor**: type `/` for headings, to-do lists, bullet and numbered lists, quotes, code blocks and dividers. Notes are stored as plain Markdown.
 - **Works offline (PWA)**: install it on your phone or desktop. Notes live on the device and sync to D1 in the background when you're online.

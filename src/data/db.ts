@@ -1,6 +1,6 @@
 // Local database (IndexedDB via Dexie). This is the app's source of truth; the server is a sync target.
 import Dexie, { type Table } from 'dexie';
-import type { Notebook, Section, Page, TableName } from '../../shared/schema';
+import type { Notebook, NotebookGroup, Section, Page, TableName } from '../../shared/schema';
 
 export interface OutboxEntry {
   key: string;          // `${table}:${id}`
@@ -14,6 +14,7 @@ export interface OutboxEntry {
 export interface MetaEntry { k: string; v: unknown }
 
 class NotesDB extends Dexie {
+  notebook_groups!: Table<NotebookGroup, string>;
   notebooks!: Table<Notebook, string>;
   sections!: Table<Section, string>;
   pages!: Table<Page, string>;
@@ -23,6 +24,14 @@ class NotesDB extends Dexie {
   constructor(name: string) {
     super(name);
     this.version(1).stores({
+      notebooks: 'id, sort_key',
+      sections: 'id, notebook_id, sort_key',
+      pages: 'id, section_id, parent_id, updated_at',
+      outbox: 'key, ts',
+      meta: 'k',
+    });
+    this.version(2).stores({
+      notebook_groups: 'id, sort_key',
       notebooks: 'id, sort_key',
       sections: 'id, notebook_id, sort_key',
       pages: 'id, section_id, parent_id, updated_at',

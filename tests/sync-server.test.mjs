@@ -82,4 +82,17 @@ const mine = await handleSync(db, { since: 0, changes: [] });
 assert.equal(mine.changes.notebooks.find((n) => n.id === 'nb1').name, 'LevelUp Inc');
 assert.ok(!('user_id' in mine.changes.notebooks[0]), 'owner column not leaked');
 console.log('✓ users are isolated from each other');
+
+// Notebook groups sync like everything else, and notebooks remember their group.
+const grp = { id: 'g1', name: 'Work', color: null, sort_key: 'Zz', created_at: now, updated_at: now, deleted_at: null };
+const gr = await handleSync(db, { since: 0, changes: [
+  { table: 'notebook_groups', id: 'g1', baseSeq: 0, row: grp },
+  { table: 'notebooks', id: 'nb2', baseSeq: 0, row: { ...nb, id: 'nb2', group_id: 'g1' } },
+] });
+assert.equal(gr.accepted.length, 2);
+assert.equal(gr.changes.notebook_groups[0].name, 'Work');
+assert.equal(gr.changes.notebooks.find((n) => n.id === 'nb2').group_id, 'g1');
+const bview = await handleSync(db, { since: 0, changes: [] }, 'user-b');
+assert.equal(bview.changes.notebook_groups.length, 0);
+console.log('✓ notebook groups sync and stay private');
 console.log('\nAll server sync tests passed');

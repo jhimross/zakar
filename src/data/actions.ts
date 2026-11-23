@@ -1,7 +1,7 @@
 // All writes go through here: update the local row + record it in the outbox, then schedule a sync.
 import { generateKeyBetween, generateNKeysBetween } from 'fractional-indexing';
 import { db } from './db';
-import type { AnyRow, Notebook, Page, Section, TableName } from '../../shared/schema';
+import type { AnyRow, Notebook, NotebookGroup, Page, Section, TableName } from '../../shared/schema';
 import { scheduleSync } from './sync';
 
 export const COLORS = ['#2F6FEB', '#22A06B', '#8B5CF6', '#E5793B', '#14B8A6', '#EAB308', '#E5484D', '#6B7280'];
@@ -43,17 +43,77 @@ export async function saveRows(table: TableName, rows: AnyRow[], opts: { touch?:
 
 const alive = <T extends { deleted_at: number | null }>(r: T | undefined): r is T => !!r && !r.deleted_at;
 
+// ---------- Notebook groups (folders in the sidebar) ----------
+export type SidebarItem = { kind: 'group'; row: NotebookGroup; id: string; sort_key: string } | { kind: 'notebook'; row: Notebook; id: string; sort_key: string };
+
+export async function listGroups() {
+  return (await db.notebook_groups.toArray()).filter(alive).sort(bySort);
+}
+
+/** Items at one level of the sidebar: groups + ungrouped notebooks (top level), or the notebooks inside a group. */
+export async function sidebarSiblings(groupId: string | null): Promise<SidebarItem[]> {
+  const [groups, nbs] = await Promise.all([listGroups(), listNotebooks()]);
+  const groupIds = new Set(groups.map((g) => g.id));
+  const inGroup = (n: Notebook) => (n.group_id && groupIds.has(n.group_id) ? n.group_id : null);
+  const items: SidebarItem[] = nbs.filter((n) => inGroup(n) === groupId).map((n) => ({ kind: 'notebook', row: n, id: n.id, sort_key: n.sort_key }));
+  if (!groupId) groups.forEach((g) => items.push({ kind: 'group', row: g, id: g.id, sort_key: g.sort_key }));
+  return items.sort(bySort);
+}
+
+export async function createGroup(name: string) {
+  const top = await sidebarSiblings(null);
+  const t = now();
+  const group: NotebookGroup = {
+    id: uid(), name: name.trim() || 'New group', color: null, sort_key: keyBetween(top.at(-1)?.sort_key, null),
+    created_at: t, updated_at: t, deleted_at: null, _seq: 0,
+  };
+  await saveRows('notebook_groups', [group]);
+  return group;
+}
+
+export async function updateGroup(id: string, patch: Partial<NotebookGroup>) {
+  const g = await db.notebook_groups.get(id);
+  if (g) await saveRows('notebook_groups', [{ ...g, ...patch }]);
+}
+
+/** Remove a group; its notebooks move to the top level where the group was. */
+export async function ungroup(id: string) {
+  const g = await db.notebook_groups.get(id);
+  if (!g) return;
+  const top = await sidebarSiblings(null);
+  const i = top.findIndex((x) => x.id === id);
+  const inside = await sidebarSiblings(id);
+  const keys = inside.length ? generateNKeysBetween(top[i - 1]?.sort_key ?? null, top[i + 1]?.sort_key ?? null, inside.length) : [];
+  await saveRows('notebooks', inside.map((n, k) => ({ ...(n.row as Notebook), group_id: null, sort_key: keys[k] })));
+  await saveRows('notebook_groups', [{ ...g, deleted_at: now() }]);
+}
+
+/** Move a notebook or group. groupId = destination group (null = top level); ref = drop next to this item. */
+export async function moveSidebarItem(kind: 'group' | 'notebook', id: string, groupId: string | null, ref?: { id: string; pos: 'before' | 'after' }) {
+  if (kind === 'group' && groupId) return; // groups don't nest
+  const sibs = (await sidebarSiblings(groupId)).filter((s) => s.id !== id);
+  let a: string | null = null; let b: string | null = null;
+  const i = ref ? sibs.findIndex((s) => s.id === ref.id) : -1;
+  if (i >= 0 && ref!.pos === 'before') { a = sibs[i - 1]?.sort_key ?? null; b = sibs[i].sort_key; }
+  else if (i >= 0) { a = sibs[i].sort_key; b = sibs[i + 1]?.sort_key ?? null; }
+  else a = sibs.at(-1)?.sort_key ?? null;
+  const sort_key = keyBetween(a, b);
+  if (kind === 'notebook') await updateNotebook(id, { group_id: groupId, sort_key });
+  else await updateGroup(id, { sort_key });
+}
+
 // ---------- Notebooks ----------
 export async function listNotebooks() {
   return (await db.notebooks.toArray()).filter(alive).sort(bySort);
 }
 
-export async function createNotebook(name: string, color?: string) {
+export async function createNotebook(name: string, color?: string, groupId: string | null = null) {
   const nbs = await listNotebooks();
+  const sibs = await sidebarSiblings(groupId);
   const t = now();
   const notebook: Notebook = {
-    id: uid(), name: name.trim() || 'Untitled notebook', color: color || COLORS[nbs.length % COLORS.length], icon: null,
-    sort_key: keyBetween(nbs.at(-1)?.sort_key, null), created_at: t, updated_at: t, deleted_at: null, _seq: 0,
+    id: uid(), group_id: groupId, name: name.trim() || 'Untitled notebook', color: color || COLORS[nbs.length % COLORS.length], icon: null,
+    sort_key: keyBetween(sibs.at(-1)?.sort_key, null), created_at: t, updated_at: t, deleted_at: null, _seq: 0,
   };
   await saveRows('notebooks', [notebook]);
   const section = await createSection(notebook.id, 'General');
