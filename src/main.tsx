@@ -1,11 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { registerSW } from 'virtual:pwa-register';
 import './lib/install'; // listen for the browser's install prompt as early as possible
 import App from './App';
+import { startUpdates } from './lib/updates';
 import './styles.css';
 
-registerSW({ immediate: true });
+startUpdates(); // checks for new versions and refreshes safely
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

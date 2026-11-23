@@ -18,6 +18,8 @@ import { LoadingScreen, LoginScreen, SetupScreen } from './components/AuthScreen
 import { PasswordDialog, UsersDialog } from './components/AccountDialogs';
 import { InstallGuide } from './components/Install';
 import { ImageDialog } from './components/ImageDialog';
+import { AboutDialog, WhatsNewHost } from './components/ReleaseNotes';
+import { useUpdate } from './lib/updates';
 
 export default function Root() {
   const status = useAuth((s) => s.status);
@@ -27,7 +29,12 @@ export default function Root() {
   useEffect(() => { if (status === 'ready' && user) useUI.getState().resetForUser(user.id); }, [status, user]);
   useTheme(theme);
   const screen = status === 'loading' ? <LoadingScreen /> : status === 'setup' ? <SetupScreen /> : status === 'login' ? <LoginScreen /> : <App />;
-  return <>{screen}<InstallGuide /><ImageDialog /></>;
+  return <>{screen}<InstallGuide /><ImageDialog /><UpdatingPill /></>;
+}
+
+function UpdatingPill() {
+  const updating = useUpdate((s) => s.updating);
+  return updating ? <div className="updating-pill" role="status"><span className="sync-dot" />Updating Zakar to the latest version…</div> : null;
 }
 
 function useTheme(theme: string) {
@@ -97,6 +104,8 @@ function App() {
       {ui.moveOpen && <MoveDialog />}
       {ui.usersOpen && <UsersDialog />}
       {ui.passwordOpen && <PasswordDialog />}
+      {ui.aboutOpen && <AboutDialog />}
+      <WhatsNewHost />
       <DialogHost />
       <Toast />
     </div>

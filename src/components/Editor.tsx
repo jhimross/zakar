@@ -115,6 +115,13 @@ function PageEditor({ page }: { page: Page }) {
     },
   });
 
+  // Save immediately when the app is about to update or close.
+  useEffect(() => {
+    const flush = () => { saveContent.flush(); saveTitle.flush(); };
+    window.addEventListener('zakar:flush', flush);
+    return () => window.removeEventListener('zakar:flush', flush);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Apply changes that arrive from sync (another device) when we're not typing.
   useEffect(() => {
     if (!editor || page.content === lastSaved.current) return;

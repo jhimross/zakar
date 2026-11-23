@@ -6,7 +6,7 @@
 </p>
 
 <p align="center"><b>Write it down. Remember.</b><br>
-A calm, offline-first notes app for sermons, studies, books and everyday notes.</p>
+A calm, private, offline-first notes app for everything worth remembering.</p>
 
 <p align="center"><i>“Write this for a memorial in a book.”</i> Exodus 17:14</p>
 
@@ -29,6 +29,7 @@ A calm, offline-first notes app for sermons, studies, books and everyday notes.<
 - [Install it like an app](#install-it-like-an-app)
 - [On your phone](#on-your-phone)
 - [Accounts and users](#accounts-and-users)
+- [Updates, What's new and About](#updates-whats-new-and-about)
 - [Keyboard shortcuts](#keyboard-shortcuts)
 - [Deploy your own (GitHub + Cloudflare)](#deploy-your-own-github--cloudflare)
 - [Run locally](#run-locally)
@@ -39,6 +40,8 @@ A calm, offline-first notes app for sermons, studies, books and everyday notes.<
 ---
 
 ## Features at a glance
+
+Zakar is a general-purpose notes app: ideas, work and meeting notes, class notes, books, plans, journals and lists. (The screenshots use a set of sermon notes as sample content.)
 
 | Feature | What it does |
 |---|---|
@@ -52,6 +55,7 @@ A calm, offline-first notes app for sermons, studies, books and everyday notes.<
 | **Offline** | Notes live on your device; changes sync when you're back online, and nothing is ever lost in a conflict |
 | **Install** | Add it to your Home Screen, Dock or desktop like a native app |
 | **Private** | Your own Cloudflare account, built-in sign-in, and an admin who manages users; every user's notes are private |
+| **Always current** | Updates itself after each release, then shows a short *What's new* note; full changelog and *About* under your name |
 | **Free** | Runs on Cloudflare's free tier (Pages + D1) |
 
 ---
@@ -62,14 +66,14 @@ Zakar's structure is simple: **groups › notebooks › pages › subpages**.
 
 <img src="docs/screenshots/notebook-groups-drag.png" alt="Dragging a notebook into a group" width="420" align="right">
 
-- **Notebook groups** are folders in the sidebar (for example *Spiritual Notes*, *Seminars & Trainings*, *Book Reading*). Click a group to fold or unfold it.
+- **Notebook groups** are folders in the sidebar (for example *Work*, *Personal*, *Book Reading*). Click a group to fold or unfold it.
 - **Drag and drop**:
   - drop a notebook **onto** a group to put it inside;
   - drop it **between** items (a blue line shows where) to reorder;
   - drag a **group** to move it with all its notebooks;
   - drop on **“Drop here to move out of groups”** to take a notebook out.
 - **Pages and subpages**: drag a page onto another to make it a subpage (up to 2 levels), or use the page's **⋯** menu → *Add subpage*, *Indent*, *Outdent*, *Move to notebook…*
-- **Breadcrumbs** at the top of the page list and the note show where you are, e.g. *Spiritual Notes › Preaching Notes › Red Sea Rules*.
+- **Breadcrumbs** at the top of the page list and the note show where you are, e.g. *Work › Clients › Kickoff call*.
 - **Colors**: give notebooks and groups a color from their **⋯** menu.
 - **Favorites and Recent** in the sidebar; **Trash** (with restore) is in the account menu.
 - On phones, use the **⋯** menus instead of dragging (*Move to group*, *Remove from group*).
@@ -124,7 +128,7 @@ Images are **embedded by URL**: the image stays hosted where it is (your website
 Press **⌘K** (Mac) or **Ctrl+K** (Windows) anywhere, or click **Search** in the sidebar.
 
 - Searches **titles, note text and tags** instantly, even offline, with typo tolerance.
-- Start with `#` to search by tag (e.g. `#sermon`).
+- Start with `#` to search by tag (e.g. `#meeting`).
 - Quick actions: *New page*, *New notebook*, *Import Markdown files*, *Export all notes*, *Toggle dark mode*, *Install app*.
 - Use ↑ ↓ and Enter to pick a result, Esc to close.
 
@@ -154,10 +158,10 @@ Account menu → **Import .md files**, then drop in **files**, a **whole folder*
 
 | On disk | In Zakar |
 |---|---|
-| `Vault/Preaching Notes/` | Notebook **Preaching Notes** |
-| `Vault/Preaching Notes/Red Sea Rules.md` | Page **Red Sea Rules** |
+| `Vault/Work Notes/` | Notebook **Work Notes** |
+| `Vault/Work Notes/Kickoff.md` | Page **Kickoff** |
 | `Meeting.md` + a `Meeting/` folder | Files in the folder become **subpages** of *Meeting* |
-| Deeper folders, e.g. `Preaching Notes/Exodus/…` | A parent page **Exodus** with its notes inside |
+| Deeper folders, e.g. `Work Notes/Clients/…` | A parent page **Clients** with its notes inside |
 | Loose files (no folder) | A notebook you choose (default *Imported*) |
 
 - Keeps front matter **title**, **tags**, **created** and **updated**, plus inline `#tags`.
@@ -209,11 +213,56 @@ The layout adapts to small screens: **notebooks → pages → note**, with back 
 </table>
 
 - **Sign in** with email and password. The **first person** to open a new deployment creates the **admin** account; nobody can do that step again afterwards.
-- **Account menu** (click your name, bottom left): *Import .md files*, *Export all notes*, *Trash*, *Change password*, *Manage users* (admins), *Sign out*.
+- **Account menu** (click your name, bottom left): *Import .md files*, *Export all notes*, *Trash*, *Change password*, *Manage users* (admins), *What's new*, *About Zakar*, *Sign out*.
 - **Manage users** (admins): add people with a generated temporary password (with a **Copy** button to share it), reset passwords, disable or re-enable accounts, make other admins, or delete users and their notes. You can't lock yourself out by accident.
 - **Every user's notes are private.**
 - **Security**: passwords are hashed (PBKDF2-SHA256); sessions use secure, HTTP-only cookies and last 30 days, renewed while you use the app; 10 wrong passwords lock that email for 15 minutes; cross-site requests are rejected.
 - **Signing out** removes that user's notes from the device (they come back when you sign in again).
+
+---
+
+## Updates, What's new and About
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/whats-new.png" alt="What's new pop-up after an update"></td>
+<td width="50%"><img src="docs/screenshots/changelog.png" alt="Full changelog"></td>
+</tr>
+</table>
+
+**Automatic updates.** When you deploy a new version, every open copy of Zakar (browser tab or installed app) picks it up on its own:
+
+- It checks for a new version when the app opens, when you come back to it, every 30 minutes, and when you reconnect to the internet.
+- When one is found, a small *“Updating Zakar to the latest version…”* note appears. It waits until you pause typing, saves what you were writing, then refreshes. Unsynced notes are safe either way: they live on the device.
+- You can also check by hand: your name → **About Zakar** → **Check for updates**.
+
+**What's new.** After an update, a pop-up shows what changed in the release (or each release you missed). It appears once per release; brand-new users don't see old notes. The full history is always under your name → **What's new**.
+
+**About.** Your name → **About Zakar** shows the version and release date, what Zakar is for, the meaning behind the name, and the developer.
+
+<p align="center"><img src="docs/screenshots/about.png" width="520" alt="About Zakar"></p>
+
+### Publishing a release
+
+Versions are dates: `YYYY.MM.DD`, with `.1`, `.2`… for more releases on the same day (e.g. `2026.11.23`, `2026.11.23.1`).
+
+1. Open `src/changelog.ts` and add a new entry **at the top** of `CHANGELOG`:
+
+   ```ts
+   {
+     version: '2026.12.01',
+     date: '2026-12-01',
+     title: 'Presentation mode',
+     items: [
+       { icon: 'focus', title: 'Presentation mode', text: 'Full-screen, large text, and the screen stays awake.' },
+     ],
+   },
+   ```
+
+   `icon` is any name from `src/components/Icon.tsx`. The top entry becomes the app version shown in *About*.
+2. Commit and push (or `npm run build && npx wrangler pages deploy dist`). That's it: open copies update themselves and show the note.
+
+To change the developer details or the About text, edit `src/about.ts`.
 
 ---
 
@@ -374,7 +423,9 @@ src/
   data/               IndexedDB, write actions, sync client, sign-in state
   components/         UI (sidebar, page list, editor, toolbar, dialogs…)
   import/             .md import and export
-  lib/                text helpers, install prompt
+  lib/                text helpers, install prompt, auto-update
+  changelog.ts        Release notes (newest first); the top entry is the app version
+  about.ts            Text for the About dialog
 docs/                 Screenshots and brand files used by this README
 tests/                Node tests for sync, accounts, import and export
 ```
@@ -403,3 +454,14 @@ Type: **Inter Display** (logo and headings) · **Inter** (app) · **Lora Italic*
 Taglines: *Write it down. Remember.* · *Isulat. Hinumdumi.*
 
 ---
+
+## Roadmap
+
+Ideas for what's next:
+
+- **Presentation mode**: full-screen, large text, screen stays awake, optional timer
+- **Templates** for notes you write often (meetings, studies, journals)
+- **Read-only share links** for a note
+- **Links between pages** (`[[wikilinks]]`) and backlinks
+- **Page history** to restore older versions
+- **File uploads** via Cloudflare R2 (images are already supported by link)

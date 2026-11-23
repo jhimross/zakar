@@ -31,6 +31,9 @@ interface UI {
   focusTitle: string | null; // page id whose title should get focus
   dialog: DialogReq | null;
   imageDialog: ImageRequest | null;
+  /** 'new' = popup after an update, 'all' = full changelog */
+  releaseNotes: 'new' | 'all' | null;
+  aboutOpen: boolean;
   usersOpen: boolean;
   /** Desktop focus mode: hides the sidebar and page list. */
   focus: boolean;
@@ -64,6 +67,8 @@ export const useUI = create<UI>((set) => ({
   focusTitle: null,
   dialog: null,
   imageDialog: null,
+  releaseNotes: null,
+  aboutOpen: false,
   usersOpen: false,
   focus: saved.focus ?? false,
   toolbar: saved.toolbar ?? true,
