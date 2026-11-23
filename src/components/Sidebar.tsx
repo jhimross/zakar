@@ -3,6 +3,7 @@ import { openDailyNote } from '../data/actions';
 import { useUI, type View } from '../store';
 import { Icon } from './Icon';
 import { NotebookTree } from './NotebookTree';
+import { BrandMark, Wordmark } from './Brand';
 import { SyncBadge } from './SyncBadge';
 import { AccountButton } from './AccountDialogs';
 import { exportAll } from '../import/exporter';
@@ -25,7 +26,7 @@ export function Sidebar() {
   return (
     <aside className="side">
       <div className="brand">
-        <div className="logo">M</div>MyNotes
+        <BrandMark size={24} /><Wordmark height={17} />
         <button className="icon-btn ml-auto" title={`Theme: ${ui.theme}`} onClick={() => ui.set({ theme: themeNext[ui.theme] })}>
           <Icon name={themeIcon} />
         </button>

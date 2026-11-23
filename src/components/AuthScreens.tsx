@@ -1,11 +1,12 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
-import { login, setup, useAuth } from '../data/auth';
+import { initAuth, login, setup, useAuth } from '../data/auth';
+import { BrandMark, Wordmark } from './Brand';
 
 function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div className="auth-brand"><div className="logo">M</div>MyNotes</div>
+        <div className="auth-brand"><BrandMark size={30} /><Wordmark height={20} /></div>
         {children}
       </div>
     </div>
@@ -26,7 +27,7 @@ function useSubmit(fn: () => Promise<void>) {
 }
 
 export function LoginScreen() {
-  const { expired, user, offlineNotice } = useAuth();
+  const { expired, user, offlineNotice, initError } = useAuth();
   const [email, setEmail] = useState(user?.email || '');
   const [password, setPassword] = useState('');
   const { busy, error, onSubmit } = useSubmit(() => login(email, password));
@@ -37,6 +38,12 @@ export function LoginScreen() {
         {expired ? 'Your session ended. Your notes are safe on this device and will sync after you sign in.' : 'Welcome back.'}
       </p>
       {offlineNotice && !navigator.onLine && <p className="auth-note">You're offline. Connect to the internet to sign in.</p>}
+      {initError && navigator.onLine && (
+        <div className="auth-note">
+          <b>Can't reach the server.</b> {initError}
+          <button className="btn small" style={{ marginTop: 8 }} onClick={() => void initAuth()}>Try again</button>
+        </div>
+      )}
       <form onSubmit={onSubmit} className="auth-form">
         <label className="field">Email
           <input className="input" type="email" autoComplete="username" required autoFocus={!email} value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -86,5 +93,5 @@ export function SetupScreen() {
 }
 
 export function LoadingScreen() {
-  return <div className="auth-page"><div className="empty-mark">M</div></div>;
+  return <div className="auth-page"><BrandMark size={48} /></div>;
 }

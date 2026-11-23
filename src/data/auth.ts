@@ -21,9 +21,11 @@ interface AuthState {
   /** True when a session ended while the app was open (local notes stay on the device). */
   expired: boolean;
   offlineNotice: boolean;
+  /** Why the server couldn't be used at startup (shown on the sign-in screen). */
+  initError: string | null;
 }
 
-export const useAuth = create<AuthState>(() => ({ status: 'loading', user: null, expired: false, offlineNotice: false }));
+export const useAuth = create<AuthState>(() => ({ status: 'loading', user: null, expired: false, offlineNotice: false, initError: null }));
 
 const CACHE_KEY = 'mynotes.user';
 const cachedUser = (): AuthUser | null => { try { return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch { return null; } };
@@ -41,7 +43,7 @@ export async function api<T = Record<string, unknown>>(path: string, method = 'G
   const isJson = (res.headers.get('content-type') || '').includes('application/json');
   const data = isJson ? await res.json() : {};
   if (!res.ok) throw new ApiError((data as { error?: string }).error || `Request failed (${res.status})`, res.status);
-  if (!isJson) throw new ApiError('Unexpected response from server', res.status);
+  if (!isJson) throw new ApiError(`The server answered ${path} with a web page instead of data, so the API isn't running. Check that the functions folder was deployed and the D1 binding is set.`, res.status);
   return data as T;
 }
 
@@ -53,6 +55,7 @@ async function enter(user: AuthUser) {
 
 /** Called once at startup. */
 export async function initAuth() {
+  useAuth.setState({ initError: null });
   try {
     const me = await api<{ user?: AuthUser; needsSetup?: boolean }>('/api/auth/me');
     if (me.needsSetup) { useAuth.setState({ status: 'setup' }); return; }
@@ -65,8 +68,9 @@ export async function initAuth() {
     }
     // Offline or server unreachable: open the last signed-in user's local notes.
     const cached = cachedUser();
-    if (cached) { await enter(cached); useAuth.setState({ offlineNotice: true }); return; }
-    useAuth.setState({ status: 'login', offlineNotice: true });
+    if (cached && !navigator.onLine) { await enter(cached); useAuth.setState({ offlineNotice: true }); return; }
+    const message = !navigator.onLine ? "You're offline." : err instanceof Error ? err.message : String(err);
+    useAuth.setState({ status: 'login', offlineNotice: !navigator.onLine, initError: message });
   }
 }
 

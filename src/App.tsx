@@ -13,6 +13,7 @@ import { MoveDialog } from './components/MoveDialog';
 import { DialogHost, Toast } from './components/Overlays';
 import { ImportDialog } from './import/ImportDialog';
 import { Icon } from './components/Icon';
+import { BrandMark } from './components/Brand';
 import { initAuth, useAuth } from './data/auth';
 import { LoadingScreen, LoginScreen, SetupScreen } from './components/AuthScreens';
 import { PasswordDialog, UsersDialog } from './components/AccountDialogs';
@@ -104,9 +105,9 @@ function Welcome({ syncing }: { syncing: boolean }) {
   return (
     <main className="welcome">
       <div className="welcome-card">
-        <div className="empty-mark">M</div>
-        <h1>Welcome to MyNotes</h1>
-        <p className="muted">Notebooks, sections and pages, like OneNote. Works offline and syncs when you're back online.</p>
+        <BrandMark size={56} className="empty-brand" />
+        <h1>Welcome to Zakar</h1>
+        <p className="muted">Write it down. Remember. Notebooks, sections and pages that work offline and sync when you're back online.</p>
         {syncing && <p className="muted small">Checking for notes from your other devices…</p>}
         <div className="row gap center">
           <button className="btn primary" onClick={async () => {

@@ -16,7 +16,7 @@ function download(blob: Blob, name: string) {
 export async function buildExportZip(): Promise<JSZip> {
   const [nbs, secs, pages] = await Promise.all([db.notebooks.toArray(), db.sections.toArray(), db.pages.toArray()]);
   const zip = new JSZip();
-  const root = zip.folder('MyNotes')!;
+  const root = zip.folder('Zakar')!;
   const used = new Set<string>();
   const unique = (path: string) => {
     let p = path; let i = 2;
@@ -46,7 +46,7 @@ export async function buildExportZip(): Promise<JSZip> {
 
 export async function exportAll() {
   const zip = await buildExportZip();
-  download(await zip.generateAsync({ type: 'blob' }), `MyNotes-${todayTitle()}.zip`);
+  download(await zip.generateAsync({ type: 'blob' }), `Zakar-${todayTitle()}.zip`);
 }
 
 export async function exportPage(id: string) {

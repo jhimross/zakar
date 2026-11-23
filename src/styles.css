@@ -5,6 +5,7 @@
   --danger: #D93636; --warn-bg: #FFF6E5; --warn-ink: #8A5A00; --ok: #22A06B;
   --shadow: 0 1px 2px rgba(0,0,0,.05), 0 0 0 1px rgba(0,0,0,.04);
   --pop: 0 10px 30px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.05);
+  --brand: #24473B; --brand-ink: #F6F1E6;
   --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   color-scheme: light;
@@ -14,6 +15,7 @@
   --ink: #EDEDEA; --ink2: #A9A8A3; --ink3: #6E6D69; --hover: #242422;
   --sel: #242422; --accent: #6C9BFF; --chip: #262624; --check: #EDEDEA;
   --warn-bg: #3A2E14; --warn-ink: #F5C76B;
+  --brand: #D9A43A; --brand-ink: #1F1F1D;
   --shadow: 0 0 0 1px rgba(255,255,255,.06);
   --pop: 0 10px 30px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08);
   color-scheme: dark;
@@ -186,7 +188,7 @@ input[type="checkbox"]:checked::after { content: ""; width: 4px; height: 8px; bo
 /* ---------- Buttons, inputs ---------- */
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; background: var(--sel); box-shadow: var(--shadow); color: var(--ink); font-weight: 500; font-size: 13px; white-space: nowrap; }
 .btn:hover { background: var(--hover); }
-.btn.primary { background: var(--ink); color: var(--bg); box-shadow: none; }
+.btn.primary { background: var(--brand); color: var(--brand-ink); box-shadow: none; }
 .btn.primary:hover { opacity: .88; }
 .btn.primary.danger { background: var(--danger); color: #fff; }
 .btn.small { padding: 4px 9px; font-size: 12px; }
@@ -275,7 +277,7 @@ input[type="checkbox"]:checked::after { content: ""; width: 4px; height: 8px; bo
   .pg { padding: 11px 10px; }
   .pg .t { font-size: 15px; }
   .pg .s { font-size: 13px; }
-  .fab { display: grid; position: absolute; right: 18px; bottom: calc(22px + env(safe-area-inset-bottom)); width: 54px; height: 54px; border-radius: 50%; background: var(--ink); color: var(--bg); place-items: center; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
+  .fab { display: grid; position: absolute; right: 18px; bottom: calc(22px + env(safe-area-inset-bottom)); width: 54px; height: 54px; border-radius: 50%; background: var(--brand); color: var(--brand-ink); place-items: center; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
   .bar { padding-top: calc(10px + env(safe-area-inset-top)); }
   .doc { padding: 12px 20px 120px; }
   .title { font-size: 26px; }
@@ -348,3 +350,13 @@ input[type="checkbox"]:checked::after { content: ""; width: 4px; height: 8px; bo
   .group-row .count { display: none; }
   .group-row .hover-only { display: inline-grid !important; }
 }
+
+/* ---------- Brand ---------- */
+.brand { gap: 9px; }
+.brand .wordmark { color: var(--ink); }
+.brand-mark { flex: none; display: block; }
+.empty-brand { margin: 0 auto; filter: drop-shadow(0 6px 14px rgba(0,0,0,.12)); }
+.auth-brand { gap: 10px; }
+.auth-brand .wordmark { color: var(--ink); }
+.auth-page > .brand-mark { animation: pulse 1s infinite alternate; }
+@media (max-width: 860px) { .brand .wordmark { height: 22px; width: auto; } }
