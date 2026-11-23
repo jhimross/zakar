@@ -360,3 +360,22 @@ input[type="checkbox"]:checked::after { content: ""; width: 4px; height: 8px; bo
 .auth-brand .wordmark { color: var(--ink); }
 .auth-page > .brand-mark { animation: pulse 1s infinite alternate; }
 @media (max-width: 860px) { .brand .wordmark { height: 22px; width: auto; } }
+
+/* ---------- Install ---------- */
+.install-side { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; color: var(--brand-strong, var(--ink)); font-weight: 500; width: 100%; background: color-mix(in srgb, var(--brand) 10%, transparent); margin-bottom: 4px; }
+.install-side:hover { background: color-mix(in srgb, var(--brand) 18%, transparent); }
+.install-login { margin-top: 14px; background: transparent; box-shadow: inset 0 0 0 1px var(--line); color: var(--ink2); }
+.install-login:hover { background: var(--hover); }
+.install-guide .guide-head { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; }
+.install-guide .guide-head h3 { margin: 0 0 2px; }
+.steps { list-style: none; display: flex; flex-direction: column; gap: 12px; padding: 0; }
+.steps li { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; line-height: 1.5; }
+.steps .n { width: 24px; height: 24px; border-radius: 50%; background: var(--brand); color: var(--brand-ink); display: grid; place-items: center; font-size: 12px; font-weight: 600; flex: none; margin-top: 1px; }
+.steps .glyph { vertical-align: -4px; margin: 0 2px; color: var(--accent); }
+
+/* ---------- Notebook header breadcrumbs (sections are hidden) ---------- */
+.list-head { padding: 16px 12px 8px 16px; border-bottom: 1px solid var(--line); margin-bottom: 6px; min-height: 52px; }
+.list-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 0; font-size: 12.5px; color: var(--ink3); min-width: 0; }
+.list-crumbs .sep { margin: 0 6px; }
+.list-crumbs .here { color: var(--ink); font-weight: 600; font-size: 13px; }
+@media (max-width: 860px) { .list-head { border-bottom: 0; min-height: 0; padding-top: 4px; } .list-crumbs .here { display: none; } .list-crumbs span:only-child { display: none; } }

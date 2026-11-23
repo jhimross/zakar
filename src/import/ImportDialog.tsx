@@ -73,7 +73,7 @@ export function ImportDialog() {
             onDrop={(e) => { e.preventDefault(); setHover(false); void load(readDataTransfer(e.dataTransfer)); }}>
             <Icon name="download" size={28} />
             <p><b>{step === 'reading' ? 'Reading files…' : 'Drop .md files, a folder, or a .zip here'}</b></p>
-            <p className="muted small">Folders become notebooks, subfolders become sections, files become pages.</p>
+            <p className="muted small">Folders become notebooks and files become pages. Subfolders become parent pages.</p>
             <div className="row gap">
               <button className="btn" onClick={() => filesRef.current?.click()}><Icon name="file" />Choose files or .zip</button>
               <button className="btn" onClick={() => folderRef.current?.click()}><Icon name="book" />Choose folder</button>
@@ -88,10 +88,11 @@ export function ImportDialog() {
           <details className="help">
             <summary>How folders are mapped</summary>
             <ul>
-              <li><code>Vault/LevelUp/Interviews/Jane.md</code> → notebook <b>LevelUp</b> › section <b>Interviews</b> › page <b>Jane</b></li>
+              <li><code>Vault/LevelUp/Jane.md</code> → notebook <b>LevelUp</b> › page <b>Jane</b></li>
+              <li><code>Vault/LevelUp/Interviews/Jane.md</code> → page <b>Jane</b> inside a parent page <b>Interviews</b></li>
               <li><code>Meeting.md</code> + a <code>Meeting/</code> folder → files in the folder become <b>subpages</b></li>
               <li>Front matter <code>title</code>, <code>tags</code>, <code>created</code>, <code>updated</code> and inline <code>#tags</code> are kept</li>
-              <li>Existing notebooks and sections with the same name are merged</li>
+              <li>Existing notebooks with the same name are merged</li>
             </ul>
           </details>
         </>
@@ -102,7 +103,7 @@ export function ImportDialog() {
           <div className="stats">
             <div><b>{plan.pageCount}</b><span>pages</span></div>
             <div><b>{plan.notebooks.length}</b><span>notebooks</span></div>
-            <div><b>{plan.notebooks.reduce((n, nb) => n + nb.sections.length, 0)}</b><span>sections</span></div>
+            <div><b>{plan.notebooks.reduce((n, nb) => n + nb.sections.filter((s) => s.name !== 'General').length, 0)}</b><span>subfolders</span></div>
             {plan.duplicateCount > 0 && <div><b>{plan.duplicateCount}</b><span>duplicates</span></div>}
           </div>
           <div className="plan-tree">

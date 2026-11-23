@@ -16,7 +16,7 @@ import { useMenu, toast } from './Overlays';
 import { SlashCommand, SlashMenu } from './SlashMenu';
 import { OfflineBanner, SyncBadge } from './SyncBadge';
 import { formatDate, relTime, wordCount } from '../lib/text';
-import { exportPage } from '../import/exporter';
+import { exportPage, exportPagePdf, exportPageText } from '../import/exporter';
 import { BrandMark } from './Brand';
 
 export function EditorPane() {
@@ -54,6 +54,7 @@ function PageEditor({ page }: { page: Page }) {
   const ui = useUI();
   const section = useLiveQuery(() => db.sections.get(page.section_id), [page.section_id]);
   const notebook = useLiveQuery(() => (section ? db.notebooks.get(section.notebook_id) : undefined), [section?.notebook_id]);
+  const group = useLiveQuery(() => (notebook?.group_id ? db.notebook_groups.get(notebook.group_id) : undefined), [notebook?.group_id]);
   const parent = useLiveQuery(() => (page.parent_id ? db.pages.get(page.parent_id) : undefined), [page.parent_id]);
   const [title, setTitle] = useState(page.title);
   const [words, setWords] = useState(() => wordCount(page.content));
@@ -121,7 +122,14 @@ function PageEditor({ page }: { page: Page }) {
   const moreMenu = [
     { label: page.favorite ? 'Remove from favorites' : 'Add to favorites', icon: 'star', onClick: () => updatePage(page.id, { favorite: page.favorite ? 0 : 1 }) },
     { label: 'Move to…', icon: 'move', onClick: () => ui.set({ moveOpen: page.id }) },
-    { label: 'Export as .md', icon: 'upload', onClick: () => { saveContent.flush(); void exportPage(page.id); } },
+    { divider: true },
+    { label: 'Export as PDF', icon: 'pdf', onClick: () => {
+      saveContent.flush();
+      const win = window.open('', '_blank'); // open now, while the click still counts as a user action
+      void exportPagePdf(page.id, editor?.getHTML() ?? '', win);
+    } },
+    { label: 'Export as .txt', icon: 'txt', onClick: () => { saveContent.flush(); setTimeout(() => void exportPageText(page.id), 50); } },
+    { label: 'Export as Markdown (.md)', icon: 'upload', onClick: () => { saveContent.flush(); setTimeout(() => void exportPage(page.id), 50); } },
     { divider: true },
     { label: 'Delete page', icon: 'trash', danger: true, onClick: async () => { await deletePage(page.id); ui.set({ pageId: null, pane: 'list' }); toast('Moved to Trash'); } },
   ];
@@ -131,10 +139,10 @@ function PageEditor({ page }: { page: Page }) {
       <OfflineBanner />
       <div className="bar">
         <button className="mobile-back inline" onClick={() => { saveContent.flush(); ui.set({ pane: 'list' }); }}>
-          <Icon name="back" />{section?.name || 'Back'}
+          <Icon name="back" />{notebook?.name || 'Back'}
         </button>
         <span className="crumb desktop-only">
-          {notebook?.name} <span className="sep">›</span> {section?.name}
+          {group && !group.deleted_at && <>{group.name} <span className="sep">›</span> </>}{notebook?.name}
           {parent && <> <span className="sep">›</span> {parent.title || 'Untitled'}</>}
           <span className="sep">›</span> <b>{page.title || 'Untitled'}</b>
         </span>

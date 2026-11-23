@@ -2,11 +2,11 @@ import { useState, type DragEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../data/db';
 import {
-  bySort, childrenOf, createPage, createSection, deletePage, deleteSection, depthOf, descendantsOf, emptyTrash,
-  indentPage, MAX_DEPTH, movePage, outdentPage, purgePage, restorePage, subtreeHeight, updatePage, updateSection,
+  bySort, childrenOf, createPage, deletePage, depthOf, descendantsOf, emptyTrash, indentPage, MAX_DEPTH, movePage,
+  outdentPage, primarySection, purgePage, restorePage, subtreeHeight, updatePage,
 } from '../data/actions';
 import type { Page } from '../../shared/schema';
-import { ask, confirmDialog, useUI } from '../store';
+import { confirmDialog, useUI } from '../store';
 import { Icon } from './Icon';
 import { useMenu, toast } from './Overlays';
 import { relTime, snippet } from '../lib/text';
@@ -22,39 +22,32 @@ function MobileBack({ label }: { label: string }) {
   return <button className="mobile-back" onClick={() => set({ pane: 'nav' })}><Icon name="back" />{label}</button>;
 }
 
-// ---------------- Section view: tabs + page tree ----------------
+// ---------------- Notebook view: breadcrumbs + page tree ----------------
 function SectionView() {
   const ui = useUI();
   const notebook = useLiveQuery(() => (ui.notebookId ? db.notebooks.get(ui.notebookId) : undefined), [ui.notebookId]);
-  const sections = useLiveQuery(async () => ui.notebookId
-    ? (await db.sections.where('notebook_id').equals(ui.notebookId).toArray()).filter((s) => !s.deleted_at).sort(bySort)
-    : [], [ui.notebookId]) || [];
-  const section = sections.find((s) => s.id === ui.sectionId) || sections[0];
+  const group = useLiveQuery(() => (notebook?.group_id ? db.notebook_groups.get(notebook.group_id) : undefined), [notebook?.group_id]);
+  // Each notebook keeps one internal section that holds its pages (sections are no longer shown).
+  const section = useLiveQuery(async () => ui.notebookId
+    ? (await db.sections.where('notebook_id').equals(ui.notebookId).toArray()).filter((s) => !s.deleted_at).sort(bySort)[0]
+    : undefined, [ui.notebookId]);
   const pages = useLiveQuery(async () => section
     ? (await db.pages.where('section_id').equals(section.id).toArray()).filter((p) => !p.deleted_at)
     : [], [section?.id]) || [];
   const [menu, openMenu] = useMenu();
   const [drag, setDrag] = useState<{ id: string } | null>(null);
   const [drop, setDrop] = useState<{ id: string; pos: 'before' | 'after' | 'inside' } | null>(null);
-  const [tabDrop, setTabDrop] = useState<string | null>(null);
 
   if (!notebook || notebook.deleted_at) {
     return <section className="list"><MobileBack label="Notebooks" /><div className="empty-small">Select or create a notebook.</div></section>;
   }
 
-  const addSection = async () => {
-    const name = await ask('New section', '', 'Create');
-    if (name === null) return;
-    const s = await createSection(notebook.id, name);
-    ui.openSection(notebook.id, s.id);
-  };
-
   const addPage = async (parentId: string | null = null) => {
-    if (!section) return;
-    const p = await createPage(section.id, { parentId });
+    const sec = section ?? (await primarySection(notebook.id));
+    const p = await createPage(sec.id, { parentId });
     if (parentId && ui.collapsed[parentId]) ui.toggleCollapsed(parentId);
     ui.set({ focusTitle: p.id });
-    ui.openPage(p.id, { notebookId: notebook.id, sectionId: section.id });
+    ui.openPage(p.id, { notebookId: notebook.id, sectionId: sec.id });
   };
 
   // Flatten the visible tree.
@@ -92,61 +85,32 @@ function SectionView() {
     }
     finish();
   };
-  const onTabDrop = async (e: DragEvent, sectionId: string) => {
-    e.preventDefault();
-    if (drag && sectionId !== section?.id) {
-      await movePage(drag.id, { sectionId, parentId: null });
-      const s = sections.find((x) => x.id === sectionId);
-      toast(`Moved to ${s?.name}`);
-    }
-    finish();
-  };
-  const finish = () => { setDrag(null); setDrop(null); setTabDrop(null); };
+  const finish = () => { setDrag(null); setDrop(null); };
 
   const pageMenu = (p: Page) => [
     { label: 'Add subpage', icon: 'sub', disabled: depthOf(pages, p) >= MAX_DEPTH, onClick: () => addPage(p.id) },
     { label: p.favorite ? 'Remove from favorites' : 'Add to favorites', icon: 'star', onClick: () => updatePage(p.id, { favorite: p.favorite ? 0 : 1 }) },
     { label: 'Indent (make subpage)', icon: 'indent', onClick: async () => { if (!(await indentPage(p.id))) toast("Can't indent this page further"); } },
     { label: 'Outdent', icon: 'outdent', disabled: !p.parent_id, onClick: () => outdentPage(p.id) },
-    { label: 'Move to…', icon: 'move', onClick: () => ui.set({ moveOpen: p.id }) },
+    { label: 'Move to notebook…', icon: 'move', onClick: () => ui.set({ moveOpen: p.id }) },
     { divider: true },
     { label: 'Delete', icon: 'trash', danger: true, onClick: async () => { await deletePage(p.id); if (ui.pageId === p.id) ui.set({ pageId: null }); toast('Moved to Trash'); } },
   ];
 
-  const sectionMenu = (id: string, name: string) => [
-    { label: 'Rename', icon: 'edit', onClick: async () => { const v = await ask('Rename section', name); if (v) await updateSection(id, { name: v.trim() }); } },
-    { colors: (c: string) => void updateSection(id, { color: c }) },
-    { divider: true },
-    { label: 'Delete section', icon: 'trash', danger: true, onClick: async () => {
-      if (await confirmDialog(`Delete “${name}”?`, 'Its pages move to Trash, where you can restore them.')) await deleteSection(id);
-    } },
-  ];
+  const crumbs = [group && !group.deleted_at ? group.name : null, notebook.name].filter(Boolean) as string[];
 
   return (
     <section className="list">
       <MobileBack label="Notebooks" />
       <h2 className="mobile-title">{notebook.name}</h2>
-      <div className="tabs" role="tablist">
-        {sections.map((s) => (
-          <button key={s.id} role="tab" aria-selected={s.id === section?.id}
-            className={`tab ${s.id === section?.id ? 'on' : ''} ${tabDrop === s.id ? 'drop' : ''}`}
-            onClick={() => ui.openSection(notebook.id, s.id)}
-            onContextMenu={(e) => openMenu(e, sectionMenu(s.id, s.name))}
-            onDoubleClick={(e) => openMenu(e, sectionMenu(s.id, s.name))}
-            onDragOver={(e) => { if (drag) { e.preventDefault(); setTabDrop(s.id); } }}
-            onDragLeave={() => setTabDrop(null)}
-            onDrop={(e) => onTabDrop(e, s.id)}>
-            <span className="dot" style={{ background: s.color || '#999' }} />{s.name}
-          </button>
-        ))}
-        <button className="tab add" title="New section" onClick={addSection}><Icon name="plus" size={13} /></button>
-      </div>
-
-      <div className="lh">
-        <h3>{section?.name || 'No sections'}</h3>
+      <div className="lh list-head">
+        <nav className="list-crumbs" aria-label="Breadcrumb">
+          {crumbs.map((c, i) => (
+            <span key={i} className={i === crumbs.length - 1 ? 'here' : ''}>{i > 0 && <span className="sep">›</span>}{c}</span>
+          ))}
+        </nav>
         <div className="row-actions">
-          {section && <button className="icon-btn" title="Section options" onClick={(e) => openMenu(e, sectionMenu(section.id, section.name))}><Icon name="more" /></button>}
-          {section && <button className="icon-btn" title="New page" onClick={() => addPage()}><Icon name="plus" /></button>}
+          <button className="icon-btn" title="New page" onClick={() => addPage()}><Icon name="plus" /></button>
         </div>
       </div>
 
@@ -155,13 +119,13 @@ function SectionView() {
           <div key={p.id}
             className={`pg ${p.id === ui.pageId ? 'on' : ''} ${drop?.id === p.id ? `drop-${drop.pos}` : ''} ${drag?.id === p.id ? 'dragging' : ''}`}
             style={{ marginLeft: depth * 16 }}
-            data-depth={depth}
+            data-depth={Math.min(depth, 2)}
             draggable
             onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', p.id); setDrag({ id: p.id }); }}
             onDragOver={(e) => onDragOver(e, p)}
             onDragLeave={() => setDrop((d) => (d?.id === p.id ? null : d))}
             onDrop={(e) => onDrop(e, p)}
-            onClick={() => ui.openPage(p.id, { notebookId: notebook.id, sectionId: section!.id })}
+            onClick={() => ui.openPage(p.id, { notebookId: notebook.id, sectionId: p.section_id })}
             onContextMenu={(e) => openMenu(e, pageMenu(p))}>
             <div className="t">
               {hasKids ? (
@@ -175,15 +139,14 @@ function SectionView() {
             <div className="s">{snippet(p.content, 70) || <span className="muted">No content</span>}</div>
           </div>
         ))}
-        {section && !rows.length && (
+        {!rows.length && (
           <div className="empty-small">
             <p>No pages yet.</p>
             <button className="btn" onClick={() => addPage()}><Icon name="plus" />New page</button>
           </div>
         )}
-        {!section && <div className="empty-small"><button className="btn" onClick={addSection}><Icon name="plus" />Add a section</button></div>}
       </div>
-      {section && <button className="fab" aria-label="New page" onClick={() => addPage()}><Icon name="plus" size={22} /></button>}
+      <button className="fab" aria-label="New page" onClick={() => addPage()}><Icon name="plus" size={22} /></button>
       {menu}
     </section>
   );
@@ -194,6 +157,8 @@ function FlatView() {
   const ui = useUI();
   const sections = useLiveQuery(() => db.sections.toArray(), []) || [];
   const notebooks = useLiveQuery(() => db.notebooks.toArray(), []) || [];
+  const groups = useLiveQuery(() => db.notebook_groups.toArray(), []) || [];
+  const groupMap = new Map(groups.filter((g) => !g.deleted_at).map((g) => [g.id, g]));
   const pages = useLiveQuery(async () => {
     if (ui.view === 'recent') return (await db.pages.orderBy('updated_at').reverse().limit(200).toArray()).filter((p) => !p.deleted_at).slice(0, 50);
     if (ui.view === 'favorites') return (await db.pages.toArray()).filter((p) => p.favorite && !p.deleted_at).sort((a, b) => b.updated_at - a.updated_at);
@@ -202,8 +167,12 @@ function FlatView() {
   }, [ui.view]) || [];
   const secMap = new Map(sections.map((s) => [s.id, s]));
   const nbMap = new Map(notebooks.map((n) => [n.id, n]));
-  const title = { recent: 'Recent', favorites: 'Favorites', trash: 'Trash', tasks: 'Tasks', section: '' }[ui.view];
-  const crumb = (p: Page) => { const s = secMap.get(p.section_id); const n = s && nbMap.get(s.notebook_id); return [n?.name, s?.name].filter(Boolean).join(' › '); };
+  const title = { recent: 'Recent', favorites: 'Favorites', trash: 'Trash', section: '' }[ui.view];
+  const crumb = (p: Page) => {
+    const s = secMap.get(p.section_id); const n = s && nbMap.get(s.notebook_id);
+    const g = n?.group_id ? groupMap.get(n.group_id) : undefined;
+    return [g?.name, n?.name].filter(Boolean).join(' › ');
+  };
 
   return (
     <section className="list">
@@ -233,7 +202,7 @@ function FlatView() {
             )}
           </div>
         ))}
-        {!pages.length && <div className="empty-small">{{ recent: 'No pages yet.', favorites: 'Star a page to see it here.', trash: 'Trash is empty.', tasks: '', section: '' }[ui.view]}</div>}
+        {!pages.length && <div className="empty-small">{{ recent: 'No pages yet.', favorites: 'Star a page to see it here.', trash: 'Trash is empty.', section: '' }[ui.view]}</div>}
       </div>
     </section>
   );

@@ -63,3 +63,39 @@ export function toggleTaskLine(md: string, line: number): string {
   lines[line] = `${m[1]}${m[2]} [${m[3] === ' ' ? 'x' : ' '}] ${m[4]}`;
   return lines.join('\n');
 }
+
+/** Convert a note's Markdown to clean, readable plain text (for .txt export). */
+export function markdownToText(md: string): string {
+  const unescape = (s: string) => s.replace(/\\([\\`*_{}[\]()#+\-.!>~|])/g, '$1');
+  const inline = (s: string) => unescape(
+    s
+      .replace(/!\[([^\]]*)\]\([^)]*\)/g, (_m, alt) => (alt ? `[image: ${alt}]` : '[image]'))
+      .replace(/\[([^\]]+)\]\(([^)\s]+)[^)]*\)/g, (_m, t, u) => (t === u || `mailto:${t}` === u ? t : `${t} (${u})`))
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/(\*\*|__)(.+?)\1/g, '$2')
+      .replace(/~~(.+?)~~/g, '$1')
+      .replace(/(^|[^\w*])\*(?!\s)(.+?)\*(?!\w)/g, '$1$2')
+      .replace(/(^|[^\w_])_(?!\s)(.+?)_(?!\w)/g, '$1$2'),
+  );
+  const out: string[] = [];
+  let inCode = false;
+  for (const raw of md.replace(/\r\n/g, '\n').split('\n')) {
+    if (/^\s*```/.test(raw)) { inCode = !inCode; continue; }
+    if (inCode) { out.push('    ' + raw); continue; }
+    let m: RegExpMatchArray | null;
+    if ((m = raw.match(/^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$/))) {
+      const text = inline(m[2]);
+      if (out.length && out[out.length - 1] !== '') out.push('');
+      out.push(text);
+      if (m[1].length <= 2) out.push((m[1].length === 1 ? '=' : '-').repeat(Math.min(Math.max(text.length, 3), 60)));
+      continue;
+    }
+    if (/^\s{0,3}([-*_])(\s*\1){2,}\s*$/.test(raw)) { out.push('—'.repeat(20)); continue; }
+    if ((m = raw.match(/^(\s*)[-*+] \[( |x|X)\] (.*)$/))) { out.push(`${m[1]}[${m[2] === ' ' ? ' ' : 'x'}] ${inline(m[3])}`); continue; }
+    if ((m = raw.match(/^(\s*)[-*+] (.*)$/))) { out.push(`${m[1]}• ${inline(m[2])}`); continue; }
+    if ((m = raw.match(/^(\s*)(\d+)[.)] (.*)$/))) { out.push(`${m[1]}${m[2]}. ${inline(m[3])}`); continue; }
+    if ((m = raw.match(/^\s*>\s?(.*)$/))) { out.push(`  │ ${inline(m[1])}`); continue; }
+    out.push(inline(raw));
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+}

@@ -1,7 +1,7 @@
 // UI state (what's selected, which dialogs are open). Data lives in IndexedDB.
 import { create } from 'zustand';
 
-export type View = 'section' | 'recent' | 'favorites' | 'tasks' | 'trash';
+export type View = 'section' | 'recent' | 'favorites' | 'trash';
 export type Pane = 'nav' | 'list' | 'editor';
 export type Theme = 'system' | 'light' | 'dark';
 

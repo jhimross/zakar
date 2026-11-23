@@ -3,17 +3,19 @@
 *Zakar* (זָכַר) is Hebrew for “to remember”. “Write this for a memorial in a book.” (Exodus 17:14)
 
 
-A minimalist, offline-first notes app organized like OneNote: **notebooks › sections › pages › subpages**. Runs on GitHub + Cloudflare Pages + Cloudflare D1, all on the free tier.
+A minimalist, offline-first notes app: **notebook groups › notebooks › pages › subpages**. Runs on GitHub + Cloudflare Pages + Cloudflare D1, all on the free tier.
 
 ## Features
 
 - **Notebook groups**: collapsible folders in the sidebar. Drag notebooks into, out of and between groups, and drag groups to reorder them (on phones, use the ⋯ menu → Move to group).
-- **Notebooks, sections (colored tabs), pages and subpages** (2 levels). Drag pages to reorder or nest them, or drop them on a section tab to move them.
+- **Notebooks, pages and subpages** (2 levels). Drag pages to reorder or nest them; breadcrumbs show where you are.
+- **Export a note** as PDF, plain text (.txt) or Markdown from its ⋯ menu.
+- **Install button** on the sign-in page and in the sidebar (hidden once installed). On iPhone/iPad it shows step-by-step Add to Home Screen instructions.
 - **Rich Markdown editor**: type `/` for headings, to-do lists, bullet and numbered lists, quotes, code blocks and dividers. Notes are stored as plain Markdown.
 - **Works offline (PWA)**: install it on your phone or desktop. Notes live on the device and sync to D1 in the background when you're online.
 - **Conflict-safe sync**: if the same page is edited on two devices while offline, both versions are kept (one is saved as a “conflict copy”).
 - **⌘K / Ctrl+K command palette**: full-text search across titles, content and `#tags`, plus quick actions.
-- **Tags, Favorites, Recent, Trash** (with restore), a **daily note**, and a **Tasks** view that collects every checkbox from every page.
+- **Tags, Favorites, Recent, Trash** (with restore). Checklists work inside any page.
 - **Import .md**: single files, whole folders or a `.zip` (Obsidian vaults and similar). Keeps front matter (`title`, `tags`, `created`, `updated`) and inline `#tags`, and shows a preview before anything is written.
 - **Export .zip** back to Markdown with the same folder layout, so you're never locked in.
 - **Built-in sign-in**: email + password accounts, with an admin who can add, disable and remove users. Each user's notes are private. Passwords are hashed with PBKDF2, sessions use secure HTTP-only cookies and last 30 days (renewed while you use the app), and repeated wrong passwords are rate limited.
