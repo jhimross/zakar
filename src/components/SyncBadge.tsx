@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../data/db';
 import { syncNow, useSync } from '../data/sync';
+import { sessionExpired } from '../data/auth';
 
 function ago(t: number | null) {
   if (!t) return 'never';
@@ -29,7 +30,7 @@ export function SyncBadge({ compact = false }: { compact?: boolean }) {
 
   return (
     <button className={`sync-badge ${cls} ${compact ? 'compact' : ''}`} title={error || 'Sync now'} onClick={() => {
-      if (state === 'auth') location.reload(); else void syncNow();
+      if (state === 'auth') sessionExpired(); else void syncNow();
     }}>
       <span className="sync-dot" />{!compact && text}
     </button>

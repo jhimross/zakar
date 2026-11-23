@@ -8,8 +8,6 @@
     "build": "node scripts/decode-icons.mjs && vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "preview": "npm run build && wrangler pages dev dist",
-    "db:migrate:local": "wrangler d1 migrations apply mynotes --local",
-    "db:migrate:remote": "wrangler d1 migrations apply mynotes --remote",
     "pages:dev": "wrangler pages dev dist --port 8788",
     "test": "node tests/run.mjs"
   },
@@ -26,7 +24,6 @@
     "dexie": "^4.0.10",
     "dexie-react-hooks": "^1.1.7",
     "fractional-indexing": "^3.2.0",
-    "jose": "^5.9.6",
     "jszip": "^3.10.1",
     "minisearch": "^7.1.1",
     "react": "^18.3.1",

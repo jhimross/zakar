@@ -28,7 +28,11 @@ interface UI {
   collapsed: Record<string, boolean>;
   focusTitle: string | null; // page id whose title should get focus
   dialog: DialogReq | null;
+  usersOpen: boolean;
+  passwordOpen: boolean;
+  ownerId: string | null;
   set: (p: Partial<UI>) => void;
+  resetForUser: (userId: string) => void;
   openNotebook: (id: string, sectionId?: string | null) => void;
   openSection: (notebookId: string, id: string) => void;
   openPage: (id: string, ctx?: { notebookId?: string; sectionId?: string }) => void;
@@ -52,7 +56,13 @@ export const useUI = create<UI>((set) => ({
   collapsed: saved.collapsed ?? {},
   focusTitle: null,
   dialog: null,
+  usersOpen: false,
+  passwordOpen: false,
+  ownerId: saved.ownerId ?? null,
   set: (p) => set(p),
+  resetForUser: (userId) => set((s) => (s.ownerId === userId ? {} : {
+    ownerId: userId, notebookId: null, sectionId: null, pageId: null, collapsed: {}, view: 'section', pane: 'nav',
+  })),
   openNotebook: (id, sectionId = null) => set({ notebookId: id, sectionId, view: 'section', pane: 'list' }),
   openSection: (notebookId, id) => set({ notebookId, sectionId: id, view: 'section', pane: 'list' }),
   openPage: (id, ctx) => set((s) => ({
@@ -67,7 +77,7 @@ export const useUI = create<UI>((set) => ({
 useUI.subscribe((s) => {
   try {
     localStorage.setItem('mynotes.ui', JSON.stringify({
-      notebookId: s.notebookId, sectionId: s.sectionId, pageId: s.pageId, theme: s.theme, collapsed: s.collapsed,
+      notebookId: s.notebookId, sectionId: s.sectionId, pageId: s.pageId, theme: s.theme, collapsed: s.collapsed, ownerId: s.ownerId,
     }));
   } catch { /* storage unavailable */ }
 });

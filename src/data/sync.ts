@@ -1,6 +1,7 @@
 // Background sync between IndexedDB and Cloudflare D1 (via /api/sync).
 import { create } from 'zustand';
 import { db, getMeta, setMeta } from './db';
+import { sessionExpired } from './auth';
 import { PUSH_BATCH, TABLE_NAMES, type PushChange, type SyncResponse, type TableName } from '../../shared/schema';
 
 export type SyncState = 'idle' | 'syncing' | 'offline' | 'error' | 'auth';
@@ -36,6 +37,7 @@ function stripLocal(row: Record<string, unknown>) {
 }
 
 export async function syncNow(): Promise<void> {
+  if (!db) return;
   if (running) { again = true; return; }
   if (!navigator.onLine) { useSync.getState().set({ state: 'offline' }); return; }
   running = true;
@@ -59,7 +61,7 @@ export async function syncNow(): Promise<void> {
         body: JSON.stringify({ since, changes }),
         credentials: 'same-origin',
       });
-      if (res.status === 401 || res.status === 403) { status.set({ state: 'auth', error: 'Sign in again to sync' }); return; }
+      if (res.status === 401) { status.set({ state: 'auth', error: 'Sign in again to sync' }); sessionExpired(); return; }
       const ctype = res.headers.get('content-type') || '';
       if (!res.ok || !ctype.includes('application/json')) throw new Error(`Sync failed (${res.status})`);
       const data = (await res.json()) as SyncResponse;

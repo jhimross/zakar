@@ -20,8 +20,8 @@ class NotesDB extends Dexie {
   outbox!: Table<OutboxEntry, string>;
   meta!: Table<MetaEntry, string>;
 
-  constructor() {
-    super('mynotes');
+  constructor(name: string) {
+    super(name);
     this.version(1).stores({
       notebooks: 'id, sort_key',
       sections: 'id, notebook_id, sort_key',
@@ -32,7 +32,26 @@ class NotesDB extends Dexie {
   }
 }
 
-export const db = new NotesDB();
+const dbName = (userId: string) => `mynotes-${userId}`;
+
+/** The signed-in user's local database (each user gets their own, so accounts never mix on a device). */
+export let db: NotesDB = null as unknown as NotesDB;
+
+export async function openUserDb(userId: string) {
+  if (db && db.name === dbName(userId)) return db;
+  db?.close();
+  db = new NotesDB(dbName(userId));
+  await db.open();
+  return db;
+}
+
+export function closeUserDb() {
+  db?.close();
+}
+
+export function deleteUserDb(userId: string) {
+  return Dexie.delete(dbName(userId));
+}
 
 export async function getMeta<T>(k: string, fallback: T): Promise<T> {
   const m = await db.meta.get(k);

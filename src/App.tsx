@@ -13,26 +13,43 @@ import { MoveDialog } from './components/MoveDialog';
 import { DialogHost, Toast } from './components/Overlays';
 import { ImportDialog } from './import/ImportDialog';
 import { Icon } from './components/Icon';
+import { initAuth, useAuth } from './data/auth';
+import { LoadingScreen, LoginScreen, SetupScreen } from './components/AuthScreens';
+import { PasswordDialog, UsersDialog } from './components/AccountDialogs';
 
-export default function App() {
-  const ui = useUI();
-  const syncState = useSync((s) => s.state);
-  const notebookCount = useLiveQuery(async () => (await db.notebooks.toArray()).filter((n) => !n.deleted_at).length, []);
+export default function Root() {
+  const status = useAuth((s) => s.status);
+  const user = useAuth((s) => s.user);
+  const theme = useUI((s) => s.theme);
+  useEffect(() => { void initAuth(); }, []);
+  useEffect(() => { if (status === 'ready' && user) useUI.getState().resetForUser(user.id); }, [status, user]);
+  useTheme(theme);
+  if (status === 'loading') return <LoadingScreen />;
+  if (status === 'setup') return <SetupScreen />;
+  if (status === 'login') return <LoginScreen />;
+  return <App />;
+}
 
-  useEffect(() => { startSync(); void requestPersistentStorage(); }, []);
-
-  // Theme
+function useTheme(theme: string) {
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = () => {
-      const dark = ui.theme === 'dark' || (ui.theme === 'system' && mq.matches);
+      const dark = theme === 'dark' || (theme === 'system' && mq.matches);
       document.documentElement.classList.toggle('dark', dark);
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#191918' : '#FBFBFA');
     };
     apply();
     mq.addEventListener('change', apply);
     return () => mq.removeEventListener('change', apply);
-  }, [ui.theme]);
+  }, [theme]);
+}
+
+function App() {
+  const ui = useUI();
+  const syncState = useSync((s) => s.state);
+  const notebookCount = useLiveQuery(async () => (await db.notebooks.toArray()).filter((n) => !n.deleted_at).length, []);
+
+  useEffect(() => { startSync(); void requestPersistentStorage(); }, []);
 
   // Shortcuts
   useEffect(() => {
@@ -74,6 +91,8 @@ export default function App() {
       {ui.paletteOpen && <CommandPalette />}
       {ui.importOpen && <ImportDialog />}
       {ui.moveOpen && <MoveDialog />}
+      {ui.usersOpen && <UsersDialog />}
+      {ui.passwordOpen && <PasswordDialog />}
       <DialogHost />
       <Toast />
     </div>

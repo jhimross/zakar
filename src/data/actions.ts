@@ -244,14 +244,15 @@ export function todayTitle(d = new Date()) {
 
 export async function openDailyNote(): Promise<Page> {
   let nb = (await listNotebooks()).find((n) => n.name.toLowerCase() === 'journal');
-  let section: Section | undefined;
+  let section: Section;
   if (!nb) {
     const created = await createNotebook('Journal', '#E5793B');
     nb = created.notebook;
     await updateSection(created.section.id, { name: 'Daily' });
-    section = (await db.sections.get(created.section.id))!;
+    section = { ...created.section, name: 'Daily' };
   } else {
-    section = (await listSections(nb.id)).find((s) => s.name.toLowerCase() === 'daily') || (await createSection(nb.id, 'Daily'));
+    const found: Section | undefined = (await listSections(nb.id)).find((s) => s.name.toLowerCase() === 'daily');
+    section = found ?? (await createSection(nb.id, 'Daily'));
   }
   const title = todayTitle();
   const existing = (await sectionPages(section.id)).find((p) => p.title === title);
