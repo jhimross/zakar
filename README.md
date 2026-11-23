@@ -403,15 +403,3 @@ Type: **Inter Display** (logo and headings) · **Inter** (app) · **Lora Italic*
 Taglines: *Write it down. Remember.* · *Isulat. Hinumdumi.*
 
 ---
-
-## Roadmap
-
-Ideas for what's next:
-
-- **Preach mode**: full-screen, large text, screen stays awake, optional timer
-- **Scripture references** that show the verse (public-domain translations)
-- **Sermon template** and a “preached on” log
-- **Read-only share links** for a note
-- **Links between pages** (`[[wikilinks]]`) and backlinks
-- **Page history** to restore older versions
-- **File uploads** via Cloudflare R2 (images are already supported by link)
