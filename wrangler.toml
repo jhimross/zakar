@@ -11,7 +11,4 @@ database_id = "52e3eced-4f8e-47a3-aa20-6c07f1e3f0a6"
 migrations_dir = "migrations"
 
 [vars]
-# Fill these in after setting up Cloudflare Access (see README).
-ACCESS_TEAM_DOMAIN = ""
-ACCESS_AUD = ""
-ALLOWED_EMAILS = ""
+NODE_VERSION = "22"
