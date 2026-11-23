@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict';
 import { createD1 } from './d1-shim.mjs';
-import { handleSync } from './.build/sync-server.js';
+import { handleSync as hs } from './.build/sync-server.js';
+import { ensureSchema } from './.build/auth-server.js';
+const U = 'user-a';
+const handleSync = (db, body, user = U) => hs(db, body, user);
 
-const db = createD1(new URL('../migrations/0001_init.sql', import.meta.url).pathname);
+const db = createD1(null);
+await ensureSchema(db);
 const now = Date.now();
 const nb = { id: 'nb1', name: 'LevelUp', color: '#2F6FEB', icon: null, sort_key: 'a0', created_at: now, updated_at: now, deleted_at: null };
 const sec = { id: 's1', notebook_id: 'nb1', parent_id: null, name: 'Interviews', color: null, sort_key: 'a0', created_at: now, updated_at: now, deleted_at: null };
@@ -69,4 +73,13 @@ let since = 0, seen = new Set(), rounds = 0, more = true;
 while (more) { const p = await handleSync(db, { since, changes: [] }); p.changes.pages.forEach((x) => seen.add(x.id)); since = p.cursor; more = p.more; rounds++; }
 assert.ok(seen.size >= 452 && rounds >= 3, `seen ${seen.size} in ${rounds} rounds`);
 console.log(`✓ paginated pull (${seen.size} pages in ${rounds} rounds)`);
+// Users can't see or overwrite each other's notes.
+const other = await handleSync(db, { since: 0, changes: [] }, 'user-b');
+assert.equal(other.changes.pages.length + other.changes.notebooks.length, 0);
+const hijack = await handleSync(db, { since: 0, changes: [{ table: 'notebooks', id: 'nb1', baseSeq: 999999, row: { ...nb, name: 'HACKED', updated_at: now + 1e6 } }] }, 'user-b');
+assert.equal(hijack.accepted.length, 0);
+const mine = await handleSync(db, { since: 0, changes: [] });
+assert.equal(mine.changes.notebooks.find((n) => n.id === 'nb1').name, 'LevelUp Inc');
+assert.ok(!('user_id' in mine.changes.notebooks[0]), 'owner column not leaked');
+console.log('✓ users are isolated from each other');
 console.log('\nAll server sync tests passed');

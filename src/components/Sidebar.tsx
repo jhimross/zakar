@@ -5,6 +5,7 @@ import { ask, confirmDialog, useUI, type View } from '../store';
 import { Icon } from './Icon';
 import { useMenu } from './Overlays';
 import { SyncBadge } from './SyncBadge';
+import { AccountButton } from './AccountDialogs';
 import { exportAll } from '../import/exporter';
 
 export function Sidebar() {
@@ -81,7 +82,7 @@ export function Sidebar() {
         <button onClick={() => exportAll()}><Icon name="upload" />Export .zip</button>
         <button className={ui.view === 'trash' ? 'on' : ''} onClick={() => go('trash')}><Icon name="trash" />Trash</button>
       </nav>
-      <div className="foot"><SyncBadge /></div>
+      <div className="foot"><SyncBadge /><AccountButton /></div>
       {menu}
     </aside>
   );

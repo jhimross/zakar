@@ -9,6 +9,7 @@ export interface Stmt {
   bind(...values: unknown[]): Stmt;
   all<T = Record<string, unknown>>(): Promise<{ results: T[] }>;
   first<T = Record<string, unknown>>(): Promise<T | null>;
+  run(): Promise<unknown>;
 }
 export interface DB {
   prepare(sql: string): Stmt;
@@ -19,8 +20,11 @@ type Row = Record<string, unknown>;
 
 const isTable = (t: unknown): t is TableName => typeof t === 'string' && (TABLE_NAMES as string[]).includes(t);
 
-/** Convert a DB row to the wire format (tags JSON -> array, drop nothing). */
+/** Convert a DB row to the wire format (tags JSON -> array, owner column removed). */
 function fromDb(table: TableName, r: Row): Row {
+  const { user_id, ...rest } = r;
+  void user_id;
+  r = rest;
   if (table === 'pages' && typeof r.tags === 'string') {
     try { r = { ...r, tags: JSON.parse(r.tags as string) }; } catch { r = { ...r, tags: [] }; }
   }
@@ -42,19 +46,20 @@ function clean(table: TableName, row: Row): Row {
   return out;
 }
 
-function upsert(db: DB, table: TableName, row: Row, seq: number): Stmt {
-  const cols = [...TABLES[table], 'seq'];
+function upsert(db: DB, table: TableName, row: Row, seq: number, userId: string): Stmt {
+  const cols = [...TABLES[table], 'seq', 'user_id'];
   const placeholders = cols.map(() => '?').join(',');
-  const updates = cols.filter((c) => c !== 'id').map((c) => `${c}=excluded.${c}`).join(',');
-  const sql = `INSERT INTO ${table} (${cols.join(',')}) VALUES (${placeholders}) ON CONFLICT(id) DO UPDATE SET ${updates}`;
-  return db.prepare(sql).bind(...cols.map((c) => (c === 'seq' ? seq : row[c])));
+  const updates = cols.filter((c) => c !== 'id' && c !== 'user_id').map((c) => `${c}=excluded.${c}`).join(',');
+  // The WHERE clause guarantees nobody can overwrite another user's row.
+  const sql = `INSERT INTO ${table} (${cols.join(',')}) VALUES (${placeholders}) ON CONFLICT(id) DO UPDATE SET ${updates} WHERE ${table}.user_id = excluded.user_id`;
+  return db.prepare(sql).bind(...cols.map((c) => (c === 'seq' ? seq : c === 'user_id' ? userId : row[c])));
 }
 
 function newId(): string {
   return crypto.randomUUID();
 }
 
-export async function handleSync(db: DB, body: SyncRequest): Promise<SyncResponse> {
+export async function handleSync(db: DB, body: SyncRequest, userId: string): Promise<SyncResponse> {
   const since = Number.isFinite(body?.since) ? Number(body.since) : 0;
   const changes: PushChange[] = Array.isArray(body?.changes)
     ? body.changes.filter((c) => c && isTable(c.table) && typeof c.id === 'string' && c.row && typeof c.row === 'object').slice(0, PUSH_BATCH)
@@ -82,6 +87,7 @@ export async function handleSync(db: DB, body: SyncRequest): Promise<SyncRespons
       const row = clean(c.table, { ...c.row, id: c.id });
       const server = existing.get(`${c.table}:${c.id}`);
       const baseSeq = Number(c.baseSeq) || 0;
+      if (server && server.user_id !== userId) continue; // not yours: ignore
 
       if (!server || Number(server.seq) <= baseSeq) {
         writes.push({ table: c.table, row, acceptId: c.id }); // fast-forward
@@ -119,7 +125,7 @@ export async function handleSync(db: DB, body: SyncRequest): Promise<SyncRespons
       const stmts = writes.map((w) => {
         seq += 1;
         if (w.acceptId) accepted.push({ table: w.table, id: w.acceptId, seq });
-        return upsert(db, w.table, w.row, seq);
+        return upsert(db, w.table, w.row, seq, userId);
       });
       await db.batch(stmts);
     }
@@ -132,8 +138,8 @@ export async function handleSync(db: DB, body: SyncRequest): Promise<SyncRespons
   let more = false;
   for (const table of TABLE_NAMES) {
     const { results } = await db
-      .prepare(`SELECT * FROM ${table} WHERE seq > ? ORDER BY seq LIMIT ?`)
-      .bind(since, PULL_LIMIT)
+      .prepare(`SELECT * FROM ${table} WHERE user_id = ? AND seq > ? ORDER BY seq LIMIT ?`)
+      .bind(userId, since, PULL_LIMIT)
       .all<Row>();
     out[table] = results.map((r) => fromDb(table, r));
     if (results.length) cursor = Math.max(cursor, Number(results[results.length - 1].seq));

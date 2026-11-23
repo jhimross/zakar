@@ -6,7 +6,7 @@ import ts from 'typescript';
 
 const root = new URL('..', import.meta.url).pathname;
 const out = join(root, 'tests/.build');
-const files = { 'shared/schema.ts': 'schema.js', 'shared/sync-server.ts': 'sync-server.js', 'src/import/parse.ts': 'import/parse.js', 'src/import/plan.ts': 'import/plan.js' };
+const files = { 'shared/schema.ts': 'schema.js', 'shared/sync-server.ts': 'sync-server.js', 'shared/auth-server.ts': 'auth-server.js', 'src/import/parse.ts': 'import/parse.js', 'src/import/plan.ts': 'import/plan.js' };
 rmSync(out, { recursive: true, force: true });
 for (const [src, dest] of Object.entries(files)) {
   const code = ts.transpileModule(readFileSync(join(root, src), 'utf8'), {
