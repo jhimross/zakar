@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import MiniSearch from 'minisearch';
 import { db } from '../data/db';
-import { createNotebook, openDailyNote, createPage } from '../data/actions';
+import { createNotebook, createPage, primarySection } from '../data/actions';
 import type { Page } from '../../shared/schema';
 import { useUI } from '../store';
 import { Icon } from './Icon';
 import { Modal } from './Overlays';
 import { plainText, snippet } from '../lib/text';
 import { exportAll } from '../import/exporter';
+import { installApp, useCanInstall } from '../lib/install';
 
 interface Result { kind: 'page' | 'action'; id: string; title: string; sub?: string; icon: string; run: () => void }
 
 export function CommandPalette() {
   const ui = useUI();
+  const canInstall = useCanInstall();
   const [q, setQ] = useState('');
   const [index, setIndex] = useState(0);
   const [data, setData] = useState<{ pages: Page[]; crumbs: Map<string, string>; nbOf: Map<string, string> } | null>(null);
@@ -20,10 +22,15 @@ export function CommandPalette() {
 
   useEffect(() => {
     void (async () => {
-      const [pages, sections, notebooks] = await Promise.all([db.pages.toArray(), db.sections.toArray(), db.notebooks.toArray()]);
+      const [pages, sections, notebooks, groups] = await Promise.all([db.pages.toArray(), db.sections.toArray(), db.notebooks.toArray(), db.notebook_groups.toArray()]);
+      const gr = new Map(groups.filter((g) => !g.deleted_at).map((g) => [g.id, g.name]));
       const nb = new Map(notebooks.map((n) => [n.id, n]));
       const crumbs = new Map<string, string>(); const nbOf = new Map<string, string>();
-      for (const s of sections) { crumbs.set(s.id, `${nb.get(s.notebook_id)?.name ?? ''} › ${s.name}`); nbOf.set(s.id, s.notebook_id); }
+      for (const s of sections) {
+        const n = nb.get(s.notebook_id);
+        crumbs.set(s.id, [n?.group_id ? gr.get(n.group_id) : null, n?.name].filter(Boolean).join(' › '));
+        nbOf.set(s.id, s.notebook_id);
+      }
       setData({ pages: pages.filter((p) => !p.deleted_at), crumbs, nbOf });
     })();
   }, []);
@@ -44,19 +51,16 @@ export function CommandPalette() {
 
   const actions: Result[] = [
     { kind: 'action', id: 'new-page', title: 'New page', icon: 'plus', run: async () => {
-      if (!ui.sectionId) return;
-      const p = await createPage(ui.sectionId); ui.set({ focusTitle: p.id, view: 'section' }); ui.openPage(p.id); close();
+      if (!ui.notebookId) return;
+      const sec = await primarySection(ui.notebookId);
+      const p = await createPage(sec.id); ui.set({ focusTitle: p.id, view: 'section' }); ui.openPage(p.id, { sectionId: sec.id }); close();
     } },
     { kind: 'action', id: 'new-nb', title: 'New notebook', icon: 'book', run: async () => {
       const { notebook, section } = await createNotebook(q.replace(/^new notebook\s*/i, '') || 'New notebook'); ui.openNotebook(notebook.id, section.id); close();
     } },
-    { kind: 'action', id: 'daily', title: "Open today's daily note", icon: 'calendar', run: async () => {
-      const p = await openDailyNote(); const s = await db.sections.get(p.section_id);
-      ui.set({ view: 'section' }); ui.openPage(p.id, { notebookId: s?.notebook_id, sectionId: p.section_id }); close();
-    } },
-    { kind: 'action', id: 'tasks', title: 'Show tasks', icon: 'tasks', run: () => { ui.set({ view: 'tasks', pane: 'list' }); close(); } },
     { kind: 'action', id: 'import', title: 'Import Markdown files', icon: 'download', run: () => ui.set({ paletteOpen: false, importOpen: true }) },
     { kind: 'action', id: 'export', title: 'Export all notes (.zip)', icon: 'upload', run: () => { void exportAll(); close(); } },
+    ...(canInstall ? [{ kind: 'action' as const, id: 'install', title: 'Install app on this device', icon: 'install', run: () => { close(); void installApp(); } }] : []),
     { kind: 'action', id: 'theme', title: 'Toggle dark mode', icon: 'moon', run: () => {
       const dark = document.documentElement.classList.contains('dark'); ui.set({ theme: dark ? 'light' : 'dark' }); close();
     } },

@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { initAuth, login, setup, useAuth } from '../data/auth';
 import { BrandMark, Wordmark } from './Brand';
+import { InstallButton } from './Install';
 
 function Shell({ children }: { children: ReactNode }) {
   return (
@@ -55,6 +56,7 @@ export function LoginScreen() {
         <button className="btn primary wide" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
       </form>
       <p className="muted small center-text">Don't have an account? Ask your admin to add you.</p>
+      <InstallButton variant="login" />
     </Shell>
   );
 }

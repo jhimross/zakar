@@ -2,12 +2,11 @@ import { useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, requestPersistentStorage } from './data/db';
 import { startSync, useSync } from './data/sync';
-import { createNotebook } from './data/actions';
+import { consolidateSections, createNotebook } from './data/actions';
 import { ask, useUI } from './store';
 import { Sidebar } from './components/Sidebar';
 import { PageList } from './components/PageList';
 import { EditorPane } from './components/Editor';
-import { TasksView } from './components/TasksView';
 import { CommandPalette } from './components/CommandPalette';
 import { MoveDialog } from './components/MoveDialog';
 import { DialogHost, Toast } from './components/Overlays';
@@ -17,6 +16,7 @@ import { BrandMark } from './components/Brand';
 import { initAuth, useAuth } from './data/auth';
 import { LoadingScreen, LoginScreen, SetupScreen } from './components/AuthScreens';
 import { PasswordDialog, UsersDialog } from './components/AccountDialogs';
+import { InstallGuide } from './components/Install';
 
 export default function Root() {
   const status = useAuth((s) => s.status);
@@ -25,10 +25,8 @@ export default function Root() {
   useEffect(() => { void initAuth(); }, []);
   useEffect(() => { if (status === 'ready' && user) useUI.getState().resetForUser(user.id); }, [status, user]);
   useTheme(theme);
-  if (status === 'loading') return <LoadingScreen />;
-  if (status === 'setup') return <SetupScreen />;
-  if (status === 'login') return <LoginScreen />;
-  return <App />;
+  const screen = status === 'loading' ? <LoadingScreen /> : status === 'setup' ? <SetupScreen /> : status === 'login' ? <LoginScreen /> : <App />;
+  return <>{screen}<InstallGuide /></>;
 }
 
 function useTheme(theme: string) {
@@ -49,6 +47,11 @@ function App() {
   const ui = useUI();
   const syncState = useSync((s) => s.state);
   const notebookCount = useLiveQuery(async () => (await db.notebooks.toArray()).filter((n) => !n.deleted_at).length, []);
+  const sectionCount = useLiveQuery(async () => (await db.sections.toArray()).filter((s) => !s.deleted_at).length, []);
+  const lastSynced = useSync((s) => s.lastSynced);
+
+  // Sections are no longer shown: fold any extra ones (older data, other devices) into their notebook.
+  useEffect(() => { if (sectionCount !== undefined && syncState !== 'syncing') void consolidateSections(); }, [sectionCount, lastSynced, syncState]);
 
   useEffect(() => { startSync(); void requestPersistentStorage(); }, []);
 
@@ -81,8 +84,6 @@ function App() {
       <Sidebar />
       {firstRun ? (
         <Welcome syncing={syncState === 'syncing'} />
-      ) : ui.view === 'tasks' ? (
-        <TasksView />
       ) : (
         <>
           <PageList />

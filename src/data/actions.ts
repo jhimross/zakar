@@ -164,6 +164,67 @@ export async function deleteSection(id: string, stamp = now()) {
   await saveRows('sections', [{ ...s, deleted_at: stamp }]);
 }
 
+// ---------- Sections are hidden: each notebook keeps one internal section that holds its pages ----------
+/** The notebook's page container (creates it if missing). */
+export async function primarySection(notebookId: string): Promise<Section> {
+  const secs = await listSections(notebookId);
+  return secs[0] ?? (await createSection(notebookId, 'General'));
+}
+
+/** "Group › Notebook" for headers and breadcrumbs. */
+export async function notebookPath(notebookId: string): Promise<string[]> {
+  const nb = await db.notebooks.get(notebookId);
+  if (!nb) return [];
+  const g = nb.group_id ? await db.notebook_groups.get(nb.group_id) : undefined;
+  return [g && !g.deleted_at ? g.name : null, nb.name].filter(Boolean) as string[];
+}
+
+let consolidating = false;
+/**
+ * Merge notebooks that still have several sections (from older versions or imports) into one.
+ * Pages from an extra section go under a new parent page named after that section, so nothing is lost.
+ * Safe to run repeatedly.
+ */
+export async function consolidateSections() {
+  if (consolidating) return;
+  consolidating = true;
+  try {
+    const secs = (await db.sections.toArray()).filter(alive);
+    const byNb = new Map<string, Section[]>();
+    secs.forEach((s) => byNb.set(s.notebook_id, [...(byNb.get(s.notebook_id) || []), s]));
+    for (const list of byNb.values()) {
+      if (list.length < 2) continue;
+      const [primary, ...extra] = list.sort(bySort);
+      for (const s of extra) {
+        const pages = (await db.pages.where('section_id').equals(s.id).toArray()).filter(alive);
+        if (pages.length) {
+          const target = await sectionPages(primary.id);
+          let parentId: string | null = null;
+          let after = childrenOf(target, null).at(-1)?.sort_key ?? null;
+          const roots = pages.filter((p) => !p.parent_id || !pages.some((x) => x.id === p.parent_id)).sort(bySort);
+          if (s.name.trim().toLowerCase() !== 'general') {
+            const t = now();
+            const wrapper: Page = {
+              id: uid(), section_id: primary.id, parent_id: null, title: s.name, content: '', tags: [], favorite: 0, purged: 0,
+              sort_key: keyBetween(after, null), created_at: s.created_at || t, updated_at: t, deleted_at: null, _seq: 0,
+            };
+            await saveRows('pages', [wrapper]);
+            parentId = wrapper.id; after = null;
+          }
+          const keys = keysAfter(after, roots.length);
+          const rootIds = new Set(roots.map((r) => r.id));
+          await saveRows('pages', pages.map((p) => rootIds.has(p.id)
+            ? { ...p, section_id: primary.id, parent_id: parentId, sort_key: keys[roots.indexOf(p)] }
+            : { ...p, section_id: primary.id }));
+        }
+        await saveRows('sections', [{ ...s, deleted_at: now() }]);
+      }
+    }
+  } finally {
+    consolidating = false;
+  }
+}
+
 // ---------- Pages ----------
 export async function sectionPages(sectionId: string) {
   return (await db.pages.where('section_id').equals(sectionId).toArray()).filter(alive).sort(bySort);
@@ -296,27 +357,10 @@ export async function outdentPage(id: string) {
   return true;
 }
 
-// ---------- Daily note ----------
+// ---------- Dates ----------
 export function todayTitle(d = new Date()) {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-
-export async function openDailyNote(): Promise<Page> {
-  let nb = (await listNotebooks()).find((n) => n.name.toLowerCase() === 'journal');
-  let section: Section;
-  if (!nb) {
-    const created = await createNotebook('Journal', '#E5793B');
-    nb = created.notebook;
-    await updateSection(created.section.id, { name: 'Daily' });
-    section = { ...created.section, name: 'Daily' };
-  } else {
-    const found: Section | undefined = (await listSections(nb.id)).find((s) => s.name.toLowerCase() === 'daily');
-    section = found ?? (await createSection(nb.id, 'Daily'));
-  }
-  const title = todayTitle();
-  const existing = (await sectionPages(section.id)).find((p) => p.title === title);
-  return existing || createPage(section.id, { title, content: '' });
 }
 
 // ---------- Tags ----------
