@@ -15,6 +15,8 @@ interface DialogReq {
   resolve: (v: string | boolean | null) => void;
 }
 
+export interface ImageRequest { src?: string; alt?: string; resolve: (v: { src: string; alt: string } | null) => void }
+
 interface UI {
   notebookId: string | null;
   sectionId: string | null;
@@ -28,7 +30,12 @@ interface UI {
   collapsed: Record<string, boolean>;
   focusTitle: string | null; // page id whose title should get focus
   dialog: DialogReq | null;
+  imageDialog: ImageRequest | null;
   usersOpen: boolean;
+  /** Desktop focus mode: hides the sidebar and page list. */
+  focus: boolean;
+  /** Show the formatting toolbar above notes. */
+  toolbar: boolean;
   passwordOpen: boolean;
   ownerId: string | null;
   set: (p: Partial<UI>) => void;
@@ -56,7 +63,10 @@ export const useUI = create<UI>((set) => ({
   collapsed: saved.collapsed ?? {},
   focusTitle: null,
   dialog: null,
+  imageDialog: null,
   usersOpen: false,
+  focus: saved.focus ?? false,
+  toolbar: saved.toolbar ?? true,
   passwordOpen: false,
   ownerId: saved.ownerId ?? null,
   set: (p) => set(p),
@@ -77,7 +87,7 @@ export const useUI = create<UI>((set) => ({
 useUI.subscribe((s) => {
   try {
     localStorage.setItem('mynotes.ui', JSON.stringify({
-      notebookId: s.notebookId, sectionId: s.sectionId, pageId: s.pageId, theme: s.theme, collapsed: s.collapsed, ownerId: s.ownerId,
+      notebookId: s.notebookId, sectionId: s.sectionId, pageId: s.pageId, theme: s.theme, collapsed: s.collapsed, ownerId: s.ownerId, focus: s.focus, toolbar: s.toolbar,
     }));
   } catch { /* storage unavailable */ }
 });
@@ -92,4 +102,9 @@ export function confirmDialog(title: string, message: string, okLabel = 'Delete'
   return new Promise((resolve) => useUI.getState().set({
     dialog: { kind: 'confirm', title, message, okLabel, danger, resolve: (v) => resolve(v === true) },
   }));
+}
+
+/** Ask for an image URL (and optional description). Resolves null if cancelled. */
+export function askImage(initial: { src?: string; alt?: string } = {}): Promise<{ src: string; alt: string } | null> {
+  return new Promise((resolve) => useUI.getState().set({ imageDialog: { ...initial, resolve } }));
 }

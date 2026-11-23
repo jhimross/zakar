@@ -69,7 +69,7 @@ export function markdownToText(md: string): string {
   const unescape = (s: string) => s.replace(/\\([\\`*_{}[\]()#+\-.!>~|])/g, '$1');
   const inline = (s: string) => unescape(
     s
-      .replace(/!\[([^\]]*)\]\([^)]*\)/g, (_m, alt) => (alt ? `[image: ${alt}]` : '[image]'))
+      .replace(/!\[([^\]]*)\]\(([^)\s]*)[^)]*\)/g, (_m, alt, src) => `[Image${alt ? `: ${alt}` : ''}] ${src}`.trim())
       .replace(/\[([^\]]+)\]\(([^)\s]+)[^)]*\)/g, (_m, t, u) => (t === u || `mailto:${t}` === u ? t : `${t} (${u})`))
       .replace(/`([^`]+)`/g, '$1')
       .replace(/(\*\*|__)(.+?)\1/g, '$2')
