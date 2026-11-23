@@ -17,6 +17,7 @@ import { SlashCommand, SlashMenu } from './SlashMenu';
 import { OfflineBanner, SyncBadge } from './SyncBadge';
 import { formatDate, relTime, wordCount } from '../lib/text';
 import { exportPage } from '../import/exporter';
+import { BrandMark } from './Brand';
 
 export function EditorPane() {
   const pageId = useUI((s) => s.pageId);
@@ -28,7 +29,7 @@ export function EditorPane() {
       <main className="ed">
         <OfflineBanner />
         <div className="empty">
-          <div className="empty-mark">M</div>
+          <BrandMark size={44} className="empty-brand" />
           <p>Select a page, or press <kbd>⌘K</kbd> to search.</p>
           <button className="mobile-only btn" onClick={() => set({ pane: 'list' })}>Back to pages</button>
         </div>

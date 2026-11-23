@@ -7,11 +7,14 @@ interface Env { DB: D1Database }
 
 export const onRequest: PagesFunction<Env, string, { user?: User }> = async (ctx) => {
   const db = ctx.env.DB as unknown as DB;
+  if (!db) {
+    return json(500, { error: 'No D1 database is connected. In Cloudflare: Pages project → Settings → Bindings → add D1 database, variable name DB.' });
+  }
   try {
     await ensureSchema(db);
   } catch (err) {
     console.error(err);
-    return json(500, { error: 'Database not available. Check the D1 binding named DB.' });
+    return json(500, { error: `Database setup failed: ${err instanceof Error ? err.message : String(err)}` });
   }
   const path = new URL(ctx.request.url).pathname;
   if (path.startsWith('/api/auth/') || path === '/api/health') return ctx.next();

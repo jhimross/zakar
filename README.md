@@ -1,4 +1,7 @@
-# MyNotes
+# Zakar
+
+*Zakar* (זָכַר) is Hebrew for “to remember”. “Write this for a memorial in a book.” (Exodus 17:14)
+
 
 A minimalist, offline-first notes app organized like OneNote: **notebooks › sections › pages › subpages**. Runs on GitHub + Cloudflare Pages + Cloudflare D1, all on the free tier.
 
