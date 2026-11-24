@@ -8,9 +8,9 @@ const handleSync = (db, body, user = U) => hs(db, body, user);
 const db = createD1(null);
 await ensureSchema(db);
 const now = Date.now();
-const nb = { id: 'nb1', name: 'LevelUp', color: '#2F6FEB', icon: null, sort_key: 'a0', created_at: now, updated_at: now, deleted_at: null };
-const sec = { id: 's1', notebook_id: 'nb1', parent_id: null, name: 'Interviews', color: null, sort_key: 'a0', created_at: now, updated_at: now, deleted_at: null };
-const pg = { id: 'p1', section_id: 's1', parent_id: null, title: 'A. Reyes', content: 'hello', tags: ['interview'], favorite: 0, purged: 0, sort_key: 'a0', created_at: now, updated_at: now, deleted_at: null };
+const nb = { id: 'nb1', name: 'Work', color: '#2F6FEB', icon: null, sort_key: 'a0', created_at: now, updated_at: now, deleted_at: null };
+const sec = { id: 's1', notebook_id: 'nb1', parent_id: null, name: 'General', color: null, sort_key: 'a0', created_at: now, updated_at: now, deleted_at: null };
+const pg = { id: 'p1', section_id: 's1', parent_id: null, title: 'Kickoff', content: 'hello', tags: ['meeting'], favorite: 0, purged: 0, sort_key: 'a0', created_at: now, updated_at: now, deleted_at: null };
 
 // Device A pushes three new rows.
 let r = await handleSync(db, { since: 0, changes: [
@@ -20,7 +20,7 @@ let r = await handleSync(db, { since: 0, changes: [
 ] });
 assert.equal(r.accepted.length, 3);
 assert.equal(r.conflicts.length, 0);
-assert.deepEqual(r.changes.pages[0].tags, ['interview']);
+assert.deepEqual(r.changes.pages[0].tags, ['meeting']);
 const seqP1 = r.accepted.find((a) => a.id === 'p1').seq;
 console.log('✓ push new rows, cursor', r.cursor);
 
@@ -47,11 +47,11 @@ assert.equal(copy.content, 'hello from B');
 console.log('✓ content conflict keeps both versions');
 
 // Metadata-only conflict -> last write wins.
-r = await handleSync(db, { since: 0, changes: [{ table: 'notebooks', id: 'nb1', baseSeq: 0, row: { ...nb, name: 'LevelUp Inc', updated_at: now + 99 } }] });
+r = await handleSync(db, { since: 0, changes: [{ table: 'notebooks', id: 'nb1', baseSeq: 0, row: { ...nb, name: 'Work (renamed)', updated_at: now + 99 } }] });
 assert.equal(r.accepted.length, 1);
 r = await handleSync(db, { since: 0, changes: [{ table: 'notebooks', id: 'nb1', baseSeq: 0, row: { ...nb, name: 'Old name', updated_at: now - 99 } }] });
 assert.equal(r.accepted.length, 0);
-assert.equal(r.conflicts[0].row.name, 'LevelUp Inc');
+assert.equal(r.conflicts[0].row.name, 'Work (renamed)');
 console.log('✓ last-write-wins for metadata');
 
 // Deletes travel as tombstones.
@@ -79,7 +79,7 @@ assert.equal(other.changes.pages.length + other.changes.notebooks.length, 0);
 const hijack = await handleSync(db, { since: 0, changes: [{ table: 'notebooks', id: 'nb1', baseSeq: 999999, row: { ...nb, name: 'HACKED', updated_at: now + 1e6 } }] }, 'user-b');
 assert.equal(hijack.accepted.length, 0);
 const mine = await handleSync(db, { since: 0, changes: [] });
-assert.equal(mine.changes.notebooks.find((n) => n.id === 'nb1').name, 'LevelUp Inc');
+assert.equal(mine.changes.notebooks.find((n) => n.id === 'nb1').name, 'Work (renamed)');
 assert.ok(!('user_id' in mine.changes.notebooks[0]), 'owner column not leaked');
 console.log('✓ users are isolated from each other');
 
