@@ -468,3 +468,11 @@ Ideas for what's next:
 - **Links between pages** (`[[wikilinks]]`) and backlinks
 - **Page history** to restore older versions
 - **File uploads** via Cloudflare R2 (images are already supported by link)
+
+---
+
+## License
+
+The code is released under the [MIT License](LICENSE): you're free to use, change and self-host it.
+
+The **Zakar name, logo and app icons** (`docs/brand/`, `public/icons/`, `scripts/icons.b64.json`) are not covered by the license. If you deploy your own copy, please give it your own name and icon (set them in `vite.config.ts`, `index.html` and `src/components/Brand.tsx`).
