@@ -13,7 +13,7 @@ A calm, private, offline-first notes app for everything worth remembering.</p>
 
 ![Zakar on desktop](docs/screenshots/hero.png)
 
-*Zakar* (זָכַר) is Hebrew for **“to remember”**. The word for “memorial” in Exodus 17:14 (*zikkaron*) comes from the same root. Zakar keeps your notes on your device so they open instantly and work offline, and syncs them to your own Cloudflare account when you're online.
+*Zakar* (זָכַר) is Hebrew for **“to remember”**. The word for “memorial” in Exodus 17:14 (*zikkaron*) comes from the same root. Zakar keeps your notes on your device so they open instantly and work offline, and syncs them to your own account when you're online.
 
 ---
 
