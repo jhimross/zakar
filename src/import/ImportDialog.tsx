@@ -88,8 +88,8 @@ export function ImportDialog() {
           <details className="help">
             <summary>How folders are mapped</summary>
             <ul>
-              <li><code>Vault/LevelUp/Jane.md</code> → notebook <b>LevelUp</b> › page <b>Jane</b></li>
-              <li><code>Vault/LevelUp/Interviews/Jane.md</code> → page <b>Jane</b> inside a parent page <b>Interviews</b></li>
+              <li><code>Vault/Work/Kickoff.md</code> → notebook <b>Work</b> › page <b>Kickoff</b></li>
+              <li><code>Vault/Work/Clients/Kickoff.md</code> → page <b>Kickoff</b> inside a parent page <b>Clients</b></li>
               <li><code>Meeting.md</code> + a <code>Meeting/</code> folder → files in the folder become <b>subpages</b></li>
               <li>Front matter <code>title</code>, <code>tags</code>, <code>created</code>, <code>updated</code> and inline <code>#tags</code> are kept</li>
               <li>Existing notebooks with the same name are merged</li>
