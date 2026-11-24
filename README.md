@@ -41,7 +41,7 @@ A calm, private, offline-first notes app for everything worth remembering.</p>
 
 ## Features at a glance
 
-Zakar is a general-purpose notes app: ideas, work and meeting notes, class notes, books, plans, journals and lists. (The screenshots use a set of sermon notes as sample content.)
+Zakar is a general-purpose notes app: ideas, work and meeting notes, class notes, books, plans, journals and lists. (The screenshots show book notes on *The Leadership Challenge* as sample content.)
 
 | Feature | What it does |
 |---|---|
