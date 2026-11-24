@@ -28,29 +28,29 @@ console.log('✓ export/import round trip');
 
 // Folder mapping
 const files = [
-  { path: 'Vault/LevelUp/Interviews/A. Reyes.md', text: 'a' },
-  { path: 'Vault/LevelUp/Interviews/Meeting.md', text: 'parent' },
-  { path: 'Vault/LevelUp/Interviews/Meeting/Notes 1.md', text: 'child' },
-  { path: 'Vault/LevelUp/Interviews/Meeting/Notes 1/Deep.md', text: 'grandchild' },
-  { path: 'Vault/LevelUp/Interviews/2024/Old.md', text: 'flattened' },
-  { path: 'Vault/LevelUp/Overview.md', text: 'nb root' },
+  { path: 'Vault/Work/Clients/Kickoff.md', text: 'a' },
+  { path: 'Vault/Work/Clients/Meeting.md', text: 'parent' },
+  { path: 'Vault/Work/Clients/Meeting/Notes 1.md', text: 'child' },
+  { path: 'Vault/Work/Clients/Meeting/Notes 1/Deep.md', text: 'grandchild' },
+  { path: 'Vault/Work/Clients/2024/Old.md', text: 'flattened' },
+  { path: 'Vault/Work/Overview.md', text: 'nb root' },
   { path: 'Vault/Root note.md', text: 'loose' },
   { path: 'Vault/.obsidian/workspace.md', text: 'hidden' },
-  { path: 'Vault/LevelUp/Interviews/photo.png', text: '' },
+  { path: 'Vault/Work/Clients/photo.png', text: '' },
 ];
-const existing = [{ id: 'nb1', name: 'levelup', sections: [{ id: 's1', name: 'Interviews', titles: new Set(['a. reyes']) }] }];
+const existing = [{ id: 'nb1', name: 'work', sections: [{ id: 's1', name: 'Clients', titles: new Set(['kickoff']) }] }];
 const plan = buildPlan(files, existing, { stripRoot: true, looseNotebook: 'Imported' });
-const lv = plan.notebooks.find((x) => x.name === 'levelup');
+const lv = plan.notebooks.find((x) => x.name === 'work');
 assert.equal(lv.existingId, 'nb1');
-const iv = lv.sections.find((s) => s.name === 'Interviews');
+const iv = lv.sections.find((s) => s.name === 'Clients');
 assert.equal(iv.existingId, 's1');
 const meeting = iv.pages.find((p) => p.title === 'Meeting');
 assert.equal(meeting.children[0].title, 'Notes 1');
 assert.equal(meeting.children[0].children[0].title, 'Deep');
-assert.ok(lv.sections.find((s) => s.name === 'Interviews / 2024').pages[0].title === 'Old');
+assert.ok(lv.sections.find((s) => s.name === 'Clients / 2024').pages[0].title === 'Old');
 assert.ok(lv.sections.find((s) => s.name === 'General').pages[0].title === 'Overview');
 assert.ok(plan.notebooks.find((x) => x.name === 'Imported').sections[0].pages[0].title === 'Root note');
-assert.equal(plan.pageCount, 7); assert.equal(plan.duplicateCount, 1); assert.deepEqual(plan.skipped, ['Vault/LevelUp/Interviews/photo.png']);
+assert.equal(plan.pageCount, 7); assert.equal(plan.duplicateCount, 1); assert.deepEqual(plan.skipped, ['Vault/Work/Clients/photo.png']);
 console.log('✓ folder → notebook/section/page mapping, subpages, duplicates');
 
 const flat = buildPlan([{ path: 'a.md', text: '# A' }, { path: 'b.md', text: 'b' }], [], { stripRoot: true, looseNotebook: 'Inbox' });
