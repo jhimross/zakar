@@ -8,6 +8,8 @@
 <p align="center"><b>Write it down. Remember.</b><br>
 A calm, private, offline-first notes app for everything worth remembering.</p>
 
+<p align="center">"The faintest ink is more powerful than the strongest memory"</p>
+
 
 ![Zakar on desktop](docs/screenshots/hero.png)
 
