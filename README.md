@@ -8,7 +8,6 @@
 <p align="center"><b>Write it down. Remember.</b><br>
 A calm, private, offline-first notes app for everything worth remembering.</p>
 
-<p align="center"><i>“Write this for a memorial in a book.”</i> Exodus 17:14</p>
 
 ![Zakar on desktop](docs/screenshots/hero.png)
 
