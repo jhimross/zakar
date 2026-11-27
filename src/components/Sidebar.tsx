@@ -5,6 +5,7 @@ import { BrandMark, Wordmark } from './Brand';
 import { SyncBadge } from './SyncBadge';
 import { AccountButton } from './AccountDialogs';
 import { InstallButton } from './Install';
+import { modKey } from '../lib/platform';
 
 export function Sidebar() {
   const ui = useUI();
@@ -23,7 +24,7 @@ export function Sidebar() {
         </button>
       </div>
       <button className="search" onClick={() => ui.set({ paletteOpen: true })}>
-        <Icon name="search" />Search<kbd>⌘K</kbd>
+        <Icon name="search" />Search<kbd className="kbd-hint">{modKey}K</kbd>
       </button>
       <nav className="nav">
         <button className={ui.view === 'recent' ? 'on' : ''} onClick={() => go('recent')}><Icon name="clock" />Recent</button>

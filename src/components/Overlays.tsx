@@ -108,14 +108,32 @@ export function DialogHost() {
   );
 }
 
+type ToastMsg = { text: string; action?: { label: string; run: () => void } };
+
 export function Toast() {
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<ToastMsg | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => {
-    const h = (e: Event) => { setMsg((e as CustomEvent).detail); setTimeout(() => setMsg(null), 2600); };
+    const h = (e: Event) => {
+      const m = (e as CustomEvent<ToastMsg>).detail;
+      clearTimeout(timer.current); // a new message gets its own full time on screen
+      setMsg(m);
+      timer.current = setTimeout(() => setMsg(null), m.action ? 6000 : 2600);
+    };
     window.addEventListener('toast', h);
-    return () => window.removeEventListener('toast', h);
+    return () => { window.removeEventListener('toast', h); clearTimeout(timer.current); };
   }, []);
-  return msg ? <div className="toast" role="status">{msg}</div> : null;
+  if (!msg) return null;
+  return (
+    <div className="toast" role="status">
+      {msg.text}
+      {msg.action && (
+        <button className="toast-action" onClick={() => { const run = msg.action!.run; clearTimeout(timer.current); setMsg(null); run(); }}>
+          {msg.action.label}
+        </button>
+      )}
+    </div>
+  );
 }
 
-export const toast = (msg: string) => window.dispatchEvent(new CustomEvent('toast', { detail: msg }));
+export const toast = (text: string, action?: ToastMsg['action']) => window.dispatchEvent(new CustomEvent<ToastMsg>('toast', { detail: { text, action } }));
