@@ -53,12 +53,31 @@ const saved = (() => {
   try { return JSON.parse(localStorage.getItem('mynotes.ui') || '{}'); } catch { return {}; }
 })();
 
+// Opening or refreshing Zakar starts on the home screen (Recent lists the last pages).
+// The one exception: an automatic update reloads the app, and then you land back in the note you were in.
+const RESUME_KEY = 'zakar.resume';
+const resume = (() => {
+  try {
+    const r = JSON.parse(sessionStorage.getItem(RESUME_KEY) || 'null');
+    sessionStorage.removeItem(RESUME_KEY);
+    return r && Date.now() - (r.at || 0) < 60_000 ? r : null;
+  } catch { return null; }
+})();
+
+/** Remember the open note for the reload that installs an update (see lib/updates.ts). */
+export function rememberPlaceForReload() {
+  const s = useUI.getState();
+  try {
+    sessionStorage.setItem(RESUME_KEY, JSON.stringify({ at: Date.now(), notebookId: s.notebookId, sectionId: s.sectionId, pageId: s.pageId, view: s.view, pane: s.pane }));
+  } catch { /* storage unavailable */ }
+}
+
 export const useUI = create<UI>((set) => ({
-  notebookId: saved.notebookId ?? null,
-  sectionId: saved.sectionId ?? null,
-  pageId: saved.pageId ?? null,
-  view: 'section',
-  pane: saved.pageId ? 'editor' : 'nav',
+  notebookId: resume?.notebookId ?? saved.notebookId ?? null,
+  sectionId: resume?.sectionId ?? saved.sectionId ?? null,
+  pageId: resume?.pageId ?? null,
+  view: resume?.view ?? 'section',
+  pane: resume?.pane ?? 'nav',
   theme: saved.theme ?? 'system',
   paletteOpen: false,
   importOpen: false,
@@ -92,7 +111,7 @@ export const useUI = create<UI>((set) => ({
 useUI.subscribe((s) => {
   try {
     localStorage.setItem('mynotes.ui', JSON.stringify({
-      notebookId: s.notebookId, sectionId: s.sectionId, pageId: s.pageId, theme: s.theme, collapsed: s.collapsed, ownerId: s.ownerId, focus: s.focus, toolbar: s.toolbar,
+      notebookId: s.notebookId, sectionId: s.sectionId, theme: s.theme, collapsed: s.collapsed, ownerId: s.ownerId, focus: s.focus, toolbar: s.toolbar,
     }));
   } catch { /* storage unavailable */ }
 });
