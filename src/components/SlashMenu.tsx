@@ -23,6 +23,7 @@ export const COMMANDS: Cmd[] = [
     void askImage().then((v) => { if (v) e.chain().focus().setImage(v).run(); });
   } },
   { title: 'Divider', icon: 'divider', hint: '---', keywords: 'hr rule line', run: (e, r) => e.chain().focus().deleteRange(r).setHorizontalRule().run() },
+  { title: 'Table', icon: 'table', keywords: 'grid rows columns cells', run: (e, r) => e.chain().focus().deleteRange(r).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
 ];
 
 interface SlashState {
