@@ -1,6 +1,15 @@
+/** Markdown table helpers: a delimiter row like `| --- | :-: |`, and a row's cells. */
+const TABLE_DELIM = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/;
+const isTableRow = (l: string) => /^\s*\|.*\|\s*$/.test(l);
+export function tableCells(line: string): string[] {
+  return line.trim().replace(/^\|/, '').replace(/\|$/, '')
+    .replace(/\\\|/g, '\u0000').split('|').map((c) => c.replace(/\u0000/g, '|').trim());
+}
+
 /** Plain-text preview of Markdown. */
 export function snippet(md: string, len = 90): string {
   const text = md
+    .split('\n').filter((l) => !TABLE_DELIM.test(l)).map((l) => (isTableRow(l) ? tableCells(l).filter(Boolean).join(' · ') : l)).join('\n')
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
@@ -79,6 +88,7 @@ export function markdownToText(md: string): string {
   );
   const out: string[] = [];
   let inCode = false;
+  let prevTableRow = false;
   for (const raw of md.replace(/\r\n/g, '\n').split('\n')) {
     if (/^\s*```/.test(raw)) { inCode = !inCode; continue; }
     if (inCode) { out.push('    ' + raw); continue; }
@@ -90,6 +100,12 @@ export function markdownToText(md: string): string {
       if (m[1].length <= 2) out.push((m[1].length === 1 ? '=' : '-').repeat(Math.min(Math.max(text.length, 3), 60)));
       continue;
     }
+    if (prevTableRow && TABLE_DELIM.test(raw)) {
+      out.push(out[out.length - 1].replace(/[^|]/g, '-').replace(/\|/g, '+'));
+      continue;
+    }
+    prevTableRow = isTableRow(raw);
+    if (prevTableRow) { out.push(tableCells(raw).map(inline).join(' | ')); continue; }
     if (/^\s{0,3}([-*_])(\s*\1){2,}\s*$/.test(raw)) { out.push('—'.repeat(20)); continue; }
     if ((m = raw.match(/^(\s*)[-*+] \[( |x|X)\] (.*)$/))) { out.push(`${m[1]}[${m[2] === ' ' ? ' ' : 'x'}] ${inline(m[3])}`); continue; }
     if ((m = raw.match(/^(\s*)[-*+] (.*)$/))) { out.push(`${m[1]}• ${inline(m[2])}`); continue; }

@@ -47,7 +47,7 @@ Zakar is a general-purpose notes app: ideas, work and meeting notes, class notes
 | Feature | What it does |
 |---|---|
 | **Organize** | Notebook groups (folders), notebooks, pages and subpages, with drag and drop and breadcrumbs |
-| **Write** | Clean editor with a formatting toolbar, `/` commands, checklists, quotes, code, links, tags |
+| **Write** | Clean editor with a formatting toolbar, `/` commands, checklists, quotes, code, links, tables, tags |
 | **Images** | Embed images from a link, with a live preview; no uploads or storage needed |
 | **Focus** | Hide the sidebar for distraction-free writing; light and dark mode |
 | **Find** | ⌘K / Ctrl+K search across titles, text and `#tags`, plus quick actions |
@@ -88,10 +88,11 @@ Zakar's structure is simple: **groups › notebooks › pages › subpages**.
 ![Formatting toolbar and the note menu](docs/screenshots/note-menu-export.png)
 
 - **Formatting toolbar** under the note's title bar:
-  text style (Text, Heading 1–3) · **bold** · *italic* · ~~strikethrough~~ · `code` · link · bullet list · numbered list · checklist · quote · code block · divider · **image** · undo/redo.
+  text style (Text, Heading 1–3) · **bold** · *italic* · ~~strikethrough~~ · `code` · link · bullet list · numbered list · checklist · quote · code block · divider · **image** · **table** · undo/redo.
   Active styles are highlighted. Hide it from the note's **⋯** menu if you prefer a bare page.
-- **`/` commands**: type `/` anywhere for the same blocks (e.g. `/heading`, `/todo`, `/quote`, `/image`).
+- **`/` commands**: type `/` anywhere for the same blocks (e.g. `/heading`, `/todo`, `/quote`, `/image`, `/table`).
 - **Markdown shortcuts** work as you type: `# ` heading, `- ` list, `1. ` numbered list, `[ ] ` checklist, `> ` quote, ` ``` ` code block, `---` divider.
+- **Tables**: insert one from the toolbar or with `/table`. Press **Tab** or **Enter** to move to the next cell (a new row is added at the end). While you are in a table, a small bar lets you add or delete rows and columns, or remove the table. Tables are saved as standard Markdown tables, so each cell holds one line of formatted text and cells can't be merged.
 - **Tags**: hover above the title and click **Add tag**. Tags show as chips and are searchable with `#tag`.
 - **Autosave**: every change is saved on your device immediately and synced shortly after you stop typing.
 

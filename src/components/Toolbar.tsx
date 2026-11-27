@@ -3,6 +3,7 @@ import type { Editor } from '@tiptap/core';
 import { Icon } from './Icon';
 import { useMenu } from './Overlays';
 import { ask, askImage } from '../store';
+import { insertTable } from './Tables';
 
 const mod = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl+';
 
@@ -66,6 +67,7 @@ export function Toolbar({ editor }: { editor: Editor | null }) {
       <Btn icon="codeblock" label="Code block" active={editor.isActive('codeBlock')} onClick={() => chain().toggleCodeBlock().run()} />
       <Btn icon="divider" label="Divider" onClick={() => chain().setHorizontalRule().run()} />
       <Btn icon="image" label="Image from a link" active={editor.isActive('image')} onClick={() => void askImage().then((v) => { if (v) chain().setImage(v).run(); })} />
+      <Btn icon="table" label="Table" active={editor.isActive('table')} disabled={editor.isActive('table')} onClick={() => insertTable(editor)} />
       <span className="tb-grow" />
       <Btn icon="undo" label={`Undo (${mod}Z)`} disabled={!editor.can().undo()} onClick={() => chain().undo().run()} />
       <Btn icon="redo" label={`Redo (${mod}⇧Z)`} disabled={!editor.can().redo()} onClick={() => chain().redo().run()} />
