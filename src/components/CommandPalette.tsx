@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import MiniSearch from 'minisearch';
 import { db } from '../data/db';
-import { createNotebook, createPage, primarySection } from '../data/actions';
+import { createNotebook, createPage, listNotebooks, primarySection } from '../data/actions';
 import type { Page } from '../../shared/schema';
 import { useUI } from '../store';
 import { Icon } from './Icon';
@@ -51,9 +51,10 @@ export function CommandPalette() {
 
   const actions: Result[] = [
     { kind: 'action', id: 'new-page', title: 'New page', icon: 'plus', run: async () => {
-      if (!ui.notebookId) return;
-      const sec = await primarySection(ui.notebookId);
-      const p = await createPage(sec.id); ui.set({ focusTitle: p.id, view: 'section' }); ui.openPage(p.id, { sectionId: sec.id }); close();
+      // No notebook open (e.g. right after sign-in): use the first one, or make one, instead of doing nothing.
+      const nbId = ui.notebookId ?? (await listNotebooks())[0]?.id ?? (await createNotebook('Notes')).notebook.id;
+      const sec = await primarySection(nbId);
+      const p = await createPage(sec.id); ui.set({ focusTitle: p.id, view: 'section' }); ui.openPage(p.id, { notebookId: nbId, sectionId: sec.id }); close();
     } },
     { kind: 'action', id: 'new-nb', title: 'New notebook', icon: 'book', run: async () => {
       const { notebook, section } = await createNotebook(q.replace(/^new notebook\s*/i, '') || 'New notebook'); ui.openNotebook(notebook.id, section.id); close();
