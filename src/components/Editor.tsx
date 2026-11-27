@@ -70,6 +70,7 @@ function PageEditor({ page }: { page: Page }) {
   const readOnly = !!page.deleted_at;
 
   const saveContent = useDebounced((md: string) => {
+    if (md === lastSaved.current) return; // nothing changed (e.g. typed then undid), so don't mark it edited
     lastSaved.current = md;
     void updatePage(page.id, { content: md });
   }, 400);
@@ -133,7 +134,8 @@ function PageEditor({ page }: { page: Page }) {
   }, [page.content, editor]);
 
   useEffect(() => { if (document.activeElement !== titleRef.current) setTitle(page.title); }, [page.title]);
-  useEffect(() => { editor?.setEditable(!readOnly); }, [readOnly, editor]);
+  // false = don't announce an update: opening a page must not count as editing it.
+  useEffect(() => { editor?.setEditable(!readOnly, false); }, [readOnly, editor]);
 
   // Focus the title for brand-new pages.
   useEffect(() => {
