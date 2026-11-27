@@ -4,6 +4,7 @@
 // - After the reload, the "What's new" popup (see changelog.ts) tells you what changed.
 import { registerSW } from 'virtual:pwa-register';
 import { create } from 'zustand';
+import { rememberPlaceForReload } from '../store';
 
 export const useUpdate = create<{ updating: boolean }>(() => ({ updating: false }));
 
@@ -25,6 +26,7 @@ function reloadWhenIdle() {
     if (typingRecently) { setTimeout(attempt, 1000); return; }
     flushPendingSaves();
     await new Promise((r) => setTimeout(r, 700)); // let the save reach IndexedDB
+    rememberPlaceForReload(); // come back to the same note after the reload
     if (updateSW) await updateSW(true); else location.reload();
   };
   setTimeout(attempt, 1200);
