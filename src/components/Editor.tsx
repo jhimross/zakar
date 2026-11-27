@@ -21,6 +21,7 @@ import { formatDate, relTime, wordCount } from '../lib/text';
 import { exportPage, exportPagePdf, exportPageText } from '../import/exporter';
 import { BrandMark } from './Brand';
 import { Toolbar } from './Toolbar';
+import { TableBar, inTableCell, tableExtensions } from './Tables';
 
 export function EditorPane() {
   const pageId = useUI((s) => s.pageId);
@@ -78,7 +79,8 @@ function PageEditor({ page }: { page: Page }) {
   const editor = useEditor({
     editable: !readOnly,
     extensions: [
-      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+      StarterKit.configure({ heading: { levels: [1, 2, 3] }, text: false }),
+      ...tableExtensions,
       TaskList,
       TaskItem.configure({ nested: true }),
       Link.configure({ openOnClick: false, autolink: true }),
@@ -93,7 +95,7 @@ function PageEditor({ page }: { page: Page }) {
       handlePaste: (view, event) => {
         const data = event.clipboardData;
         const text = data?.getData('text/plain')?.trim() ?? '';
-        if (!text || data?.getData('text/html') || !looksLikeImageUrl(text)) return false;
+        if (!text || data?.getData('text/html') || !looksLikeImageUrl(text) || inTableCell(view.state)) return false;
         const image = view.state.schema.nodes.image;
         if (!image) return false;
         view.dispatch(view.state.tr.replaceSelectionWith(image.create({ src: text })).scrollIntoView());
@@ -194,6 +196,7 @@ function PageEditor({ page }: { page: Page }) {
       </div>
 
       {!readOnly && ui.toolbar && <Toolbar editor={editor} />}
+      {!readOnly && <TableBar editor={editor} />}
 
       {readOnly && (
         <div className="trash-banner">
