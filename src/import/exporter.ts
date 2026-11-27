@@ -98,6 +98,11 @@ export function printableHtml(o: { title: string; crumb: string; date: string; t
   .content blockquote { margin: 10px 0; padding: 2px 0 2px 14px; border-left: 3px solid #D9A43A; color: #3A3A37; font-style: italic; }
   .content pre { background: #F4F4F2; border-radius: 6px; padding: 10px 12px; white-space: pre-wrap; font-size: 9.5pt; }
   .content code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .92em; }
+  .content table { border-collapse: collapse; width: 100%; margin: 10px 0 12px; font-size: 10pt; break-inside: avoid; page-break-inside: avoid; }
+  .content th, .content td { border: 1px solid #D9D8D3; padding: 5px 8px; text-align: left; vertical-align: top; }
+  .content th { background: #F0EFEB; font-weight: 600; }
+  .content th p, .content td p { margin: 0; }
+  .content colgroup { display: none; }
   .content a { color: #24473B; }
   .content hr { border: 0; border-top: 1px solid #E9E8E4; margin: 16px 0; }
   .content img { max-width: 100%; }
