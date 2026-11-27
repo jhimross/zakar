@@ -94,7 +94,10 @@ function SectionView() {
     { label: 'Outdent', icon: 'outdent', disabled: !p.parent_id, onClick: () => outdentPage(p.id) },
     { label: 'Move to notebook…', icon: 'move', onClick: () => ui.set({ moveOpen: p.id }) },
     { divider: true },
-    { label: 'Delete', icon: 'trash', danger: true, onClick: async () => { await deletePage(p.id); if (ui.pageId === p.id) ui.set({ pageId: null }); toast('Moved to Trash'); } },
+    { label: 'Delete', icon: 'trash', danger: true, onClick: async () => {
+      await deletePage(p.id); if (ui.pageId === p.id) ui.set({ pageId: null });
+      toast('Moved to Trash', { label: 'Undo', run: () => void restorePage(p.id) });
+    } },
   ];
 
   const crumbs = [group && !group.deleted_at ? group.name : null, notebook.name].filter(Boolean) as string[];

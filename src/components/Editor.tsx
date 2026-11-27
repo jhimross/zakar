@@ -21,12 +21,12 @@ import { formatDate, relTime, wordCount } from '../lib/text';
 import { exportPage, exportPagePdf, exportPageText } from '../import/exporter';
 import { BrandMark } from './Brand';
 import { Toolbar } from './Toolbar';
+import { modKey } from '../lib/platform';
 import { TableBar, inTableCell, tableExtensions } from './Tables';
 
 export function EditorPane() {
   const pageId = useUI((s) => s.pageId);
   const set = useUI((s) => s.set);
-  const focus = useUI((s) => s.focus);
   const page = useLiveQuery(() => (pageId ? db.pages.get(pageId) : undefined), [pageId]);
 
   if (!pageId || !page || page.purged) {
@@ -35,9 +35,8 @@ export function EditorPane() {
         <OfflineBanner />
         <div className="empty">
           <BrandMark size={44} className="empty-brand" />
-          <p>Select a page, or press <kbd>⌘K</kbd> to search.</p>
+          <p>Select a page<span className="kbd-hint">, or press <kbd>{modKey}K</kbd> to search</span>.</p>
           <button className="mobile-only btn" onClick={() => set({ pane: 'list' })}>Back to pages</button>
-          {focus && <button className="btn desktop-only" onClick={() => set({ focus: false })}><Icon name="sidebar" />Show sidebar</button>}
         </div>
       </main>
     );
@@ -167,7 +166,11 @@ function PageEditor({ page }: { page: Page }) {
     { label: 'Export as .txt', icon: 'txt', onClick: () => { saveContent.flush(); setTimeout(() => void exportPageText(page.id), 50); } },
     { label: 'Export as Markdown (.md)', icon: 'upload', onClick: () => { saveContent.flush(); setTimeout(() => void exportPage(page.id), 50); } },
     { divider: true },
-    { label: 'Delete page', icon: 'trash', danger: true, onClick: async () => { await deletePage(page.id); ui.set({ pageId: null, pane: 'list' }); toast('Moved to Trash'); } },
+    { label: 'Delete page', icon: 'trash', danger: true, onClick: async () => {
+      const id = page.id;
+      await deletePage(id); ui.set({ pageId: null, pane: 'list' });
+      toast('Moved to Trash', { label: 'Undo', run: () => void restorePage(id).then(() => useUI.getState().openPage(id)) });
+    } },
   ];
 
   return (
@@ -178,7 +181,7 @@ function PageEditor({ page }: { page: Page }) {
           <Icon name="back" />{notebook?.name || 'Back'}
         </button>
         <button className={`icon-btn focus-btn desktop-only ${ui.focus ? 'on' : ''}`}
-          title={ui.focus ? 'Show sidebar (Ctrl/⌘ + \\)' : 'Focus mode: hide sidebar (Ctrl/⌘ + \\)'}
+          title={ui.focus ? `Show sidebar (${modKey}\\)` : `Focus mode: hide sidebar (${modKey}\\)`}
           aria-pressed={ui.focus} onClick={() => ui.set({ focus: !ui.focus })}><Icon name="sidebar" /></button>
         <span className="crumb desktop-only">
           {group && !group.deleted_at && <>{group.name} <span className="sep">›</span> </>}{notebook?.name}
