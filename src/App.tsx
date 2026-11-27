@@ -89,7 +89,7 @@ function App() {
   const firstRun = notebookCount === 0;
 
   return (
-    <div className={`app pane-${ui.pane} view-${ui.view} ${ui.focus ? 'focus' : ''}`}>
+    <div className={`app pane-${ui.pane} view-${ui.view} ${ui.focus && ui.pageId ? 'focus' : ''}`}>
       <Sidebar />
       {firstRun ? (
         <Welcome syncing={syncState === 'syncing'} />
@@ -119,7 +119,7 @@ function Welcome({ syncing }: { syncing: boolean }) {
       <div className="welcome-card">
         <BrandMark size={56} className="empty-brand" />
         <h1>Welcome to Zakar</h1>
-        <p className="muted">Write it down. Remember. Notebooks, sections and pages that work offline and sync when you're back online.</p>
+        <p className="muted">Write it down. Remember. Notebooks and pages that work offline and sync when you're back online.</p>
         {syncing && <p className="muted small">Checking for notes from your other devices…</p>}
         <div className="row gap center">
           <button className="btn primary" onClick={async () => {
