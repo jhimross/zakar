@@ -17,6 +17,16 @@ export interface Release { version: string; date: string; title: string; items: 
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2026.11.27',
+    date: '2026-11-27',
+    title: 'Tables',
+    items: [
+      { icon: 'table', title: 'Add a table', text: 'Click the table button in the toolbar or type /table. Press Tab or Enter to move to the next cell; a new row is added at the end.' },
+      { icon: 'rowBelow', title: 'Edit rows and columns', text: 'While you’re in a table, a small bar lets you add or delete rows and columns, or remove the table.' },
+      { icon: 'upload', title: 'Works everywhere', text: 'Tables come along when you export to PDF, text or Markdown, and tables in imported Markdown files show up too.' },
+    ],
+  },
+  {
     version: '2026.11.23.5',
     date: '2026-11-23',
     title: "What's new and About",
